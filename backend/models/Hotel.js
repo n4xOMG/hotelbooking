@@ -16,6 +16,7 @@ const hotelSchema = new mongoose.Schema({
   avgRating: { type: Number, default: 0 },
   images: [String], // General hotel images
   isAvailable: { type: Boolean, default: true },
+  isProcessed: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
 

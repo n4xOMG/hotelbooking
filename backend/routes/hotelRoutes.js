@@ -1,87 +1,152 @@
 const express = require("express");
 const Hotel = require("../models/Hotel");
+const Room = require("../models/Room");
 const { verifyToken } = require("../config/jwtConfig");
 
 const router = express.Router();
 
+// Get all hotels with optional filters
 router.get("/", async (req, res) => {
   const filters = req.query;
-  const hotels = await Hotel.find(filters);
-  res.json(hotels);
-});
-
-router.get("/:id", async (req, res) => {
-  const hotel = await Hotel.findById(req.params.id);
-  res.json(hotel);
-});
-
-// Create hotel
-router.post("/", verifyToken, async (req, res) => {
   try {
-    const { name, description, location, price } = req.body;
+    const hotels = await Hotel.find(filters)
+      .populate("owner", "firstname lastname email")
+      .populate("propertyType", "type icon")
+      .populate("categories", "name icon")
+      .populate("rooms")
+      .populate("amenities", "name")
+      .populate("ratings");
+    res.json(hotels);
+  } catch (error) {
+    res.status(500).json({ message: `Server error: ${error}` });
+  }
+});
 
-    if (!name || !description || !location || !price) {
-      return res.status(400).json({ message: "Missing required fields" });
+// Get a single hotel by ID
+router.get("/:id", async (req, res) => {
+  try {
+    const hotel = await Hotel.findById(req.params.id)
+      .populate("owner", "firstname lastname email")
+      .populate("propertyType", "type icon")
+      .populate("categories", "name icon")
+      .populate("rooms")
+      .populate("amenities", "name")
+      .populate("ratings");
+    if (!hotel) {
+      return res.status(404).json({ message: "Hotel not found" });
     }
+    res.json(hotel);
+  } catch (error) {
+    res.status(500).json({ message: `Server error: ${error}` });
+  }
+});
 
-    const newHotel = new Hotel({
-      ...req.body,
+// Create a new hotel (hotel owner only)
+router.post("/", verifyToken, async (req, res) => {
+  const { name, description, location, propertyType, categories, rooms, totalRooms, totalBeds, totalBaths, price, amenities, images } =
+    req.body;
+
+  try {
+    // Create room documents and get their IDs
+    const roomIds = await Promise.all(
+      rooms.map(async (room) => {
+        const newRoom = new Room(room);
+        await newRoom.save();
+        return newRoom._id;
+      })
+    );
+
+    // Prepare hotel data
+    const hotelData = {
       owner: req.user.id,
-    });
+      name,
+      description,
+      location,
+      propertyType,
+      categories,
+      rooms: roomIds,
+      totalRooms,
+      totalBeds,
+      totalBaths,
+      price,
+      amenities,
+      images,
+    };
 
+    const newHotel = new Hotel(hotelData);
     await newHotel.save();
     res.status(201).json(newHotel);
   } catch (error) {
-    console.error("Create hotel error:", error);
-    res.status(500).json({ message: "Failed to create hotel", error: error.message });
+    res.status(500).json({ message: `Server error: ${error}` });
   }
 });
 
-// Update hotel
+// Update a hotel (hotel owner only)
 router.put("/:id", verifyToken, async (req, res) => {
   try {
-    const hotelId = req.params.id;
-
-    const hotel = await Hotel.findById(hotelId);
+    const hotel = await Hotel.findById(req.params.id);
     if (!hotel) {
       return res.status(404).json({ message: "Hotel not found" });
     }
 
-    if (hotel.owner.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Unauthorized to update this hotel" });
+    if (hotel.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
     }
 
-    const updatedHotel = await Hotel.findByIdAndUpdate(hotelId, req.body, { new: true, runValidators: true });
+    const { name, description, location, propertyType, categories, rooms, totalRooms, totalBeds, totalBaths, price, amenities, images } =
+      req.body;
 
+    // Create room documents and get their IDs if new rooms are provided
+    let roomIds = hotel.rooms;
+    if (rooms && rooms.length > 0) {
+      roomIds = await Promise.all(
+        rooms.map(async (room) => {
+          const newRoom = new Room(room);
+          await newRoom.save();
+          return newRoom._id;
+        })
+      );
+    }
+
+    // Prepare hotel data
+    const hotelData = {
+      name,
+      description,
+      location,
+      propertyType,
+      categories,
+      rooms: roomIds,
+      totalRooms,
+      totalBeds,
+      totalBaths,
+      price,
+      amenities,
+      images,
+    };
+
+    const updatedHotel = await Hotel.findByIdAndUpdate(req.params.id, hotelData, { new: true });
     res.json(updatedHotel);
   } catch (error) {
-    console.error("Update hotel error:", error);
-    if (error.name === "ValidationError") {
-      return res.status(400).json({ message: "Invalid hotel data", error: error.message });
-    }
-    res.status(500).json({ message: "Failed to update hotel", error: error.message });
+    res.status(500).json({ message: `Server error: ${error}` });
   }
 });
 
-// Book hotel
-router.post("/:id/book", verifyToken, async (req, res) => {
+// Delete a hotel (hotel owner only)
+router.delete("/:id", verifyToken, async (req, res) => {
   try {
-    const hotelId = req.params.id;
-    const { checkIn, checkOut, guests } = req.body;
-
-    if (!checkIn || !checkOut || !guests) {
-      return res.status(400).json({ message: "Missing required booking details" });
-    }
-
-    const hotel = await Hotel.findById(hotelId);
+    const hotel = await Hotel.findById(req.params.id);
     if (!hotel) {
       return res.status(404).json({ message: "Hotel not found" });
     }
 
-    res.json({ message: "Hotel booked successfully" });
+    if (hotel.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    await hotel.remove();
+    res.json({ message: "Hotel deleted successfully" });
   } catch (error) {
-    console.error("Book hotel error:", error);
-    res.status(500).json({ message: "Failed to book hotel", error: error.message });
+    res.status(500).json({ message: `Server error: ${error}` });
   }
 });
 

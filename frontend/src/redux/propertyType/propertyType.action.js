@@ -30,7 +30,7 @@ export const createPropertyType = (propertyTypeData) => async (dispatch) => {
 };
 
 // Get all property types
-export const getPropertyTypes = () => async (dispatch) => {
+export const fetchPropertyTypes = () => async (dispatch) => {
   dispatch({ type: GET_PROPERTY_TYPES_REQUEST });
   try {
     const { data } = await axios.get(`${API_BASE_URL}/property-types`);

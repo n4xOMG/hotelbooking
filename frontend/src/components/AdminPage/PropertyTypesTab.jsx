@@ -25,7 +25,12 @@ import {
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FixedSizeList as List } from "react-window";
-import { createPropertyType, deletePropertyType, getPropertyTypes, updatePropertyType } from "../../redux/propertyType/propertyType.action";
+import {
+  createPropertyType,
+  deletePropertyType,
+  fetchPropertyTypes,
+  updatePropertyType,
+} from "../../redux/propertyType/propertyType.action";
 const IconMenuItem = React.memo(({ index, style, data, onSelect }) => {
   const option = data[index];
   return (
@@ -43,8 +48,6 @@ export default function PropertyTypesTab() {
   const [selectedPropertyType, setSelectedPropertyType] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [propertyTypeData, setPropertyTypeData] = useState({ type: "", description: "", icon: "" });
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [iconAnchorEl, setIconAnchorEl] = useState(null);
   const iconOptions = Object.keys(Icons).map((icon) => ({
     label: icon,
@@ -52,8 +55,8 @@ export default function PropertyTypesTab() {
   }));
 
   useEffect(() => {
-    dispatch(getPropertyTypes(page));
-  }, [dispatch, page]);
+    dispatch(fetchPropertyTypes());
+  }, [dispatch]);
 
   const handleMenuOpen = (event, propertyType) => {
     setMenuAnchorEl(event.currentTarget);
@@ -92,14 +95,8 @@ export default function PropertyTypesTab() {
 
   const handleDeletePropertyType = (id) => {
     dispatch(deletePropertyType(id));
-    dispatch(getPropertyTypes(page));
+    dispatch(fetchPropertyTypes());
     handleMenuClose();
-  };
-
-  const loadMore = () => {
-    if (hasMore && !loading) {
-      setPage((prevPage) => prevPage + 1);
-    }
   };
 
   const handleIconClick = (event) => {

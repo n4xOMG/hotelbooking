@@ -1,10 +1,8 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import UploadIcon from "@mui/icons-material/Upload";
 import { Box, Button, Card, CardContent, CardHeader, IconButton } from "@mui/material";
-import { useState } from "react";
-export default function PropertyImages() {
-  const [images, setImages] = useState([]);
 
+export default function PropertyImages({ images, setImages }) {
   const handleImageUpload = (event) => {
     const files = Array.from(event.target.files);
     const newImages = files.map((file) => ({
@@ -17,6 +15,7 @@ export default function PropertyImages() {
   const handleRemoveImage = (index) => {
     setImages((prevImages) => prevImages.filter((_, i) => i !== index));
   };
+
   return (
     <Card sx={{ mb: 4 }}>
       <CardHeader title="Property Images" />

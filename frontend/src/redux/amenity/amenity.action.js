@@ -1,4 +1,4 @@
-import { api } from "../../api/api";
+import { api, API_BASE_URL } from "../../api/api";
 import axios from "axios";
 import {
   CREATE_AMENITY_REQUEST,
@@ -33,7 +33,7 @@ export const createAmenity = (amenityData) => async (dispatch) => {
 export const fetchAmenities = () => async (dispatch) => {
   dispatch({ type: FETCH_AMENITIES_REQUEST });
   try {
-    const { data } = await axios.get("/amenities");
+    const { data } = await axios.get(`${API_BASE_URL}/amenities`);
     dispatch({ type: FETCH_AMENITIES_SUCCESS, payload: data });
   } catch (error) {
     dispatch({ type: FETCH_AMENITIES_FAILURE, payload: error.message });
@@ -44,7 +44,7 @@ export const fetchAmenities = () => async (dispatch) => {
 export const fetchAmenity = (id) => async (dispatch) => {
   dispatch({ type: FETCH_AMENITY_REQUEST });
   try {
-    const { data } = await axios.get(`/amenities/${id}`);
+    const { data } = await axios.get(`${API_BASE_URL}/amenities/${id}`);
     dispatch({ type: FETCH_AMENITY_SUCCESS, payload: data });
   } catch (error) {
     dispatch({ type: FETCH_AMENITY_FAILURE, payload: error.message });
@@ -55,7 +55,7 @@ export const fetchAmenity = (id) => async (dispatch) => {
 export const updateAmenity = (id, amenityData) => async (dispatch) => {
   dispatch({ type: UPDATE_AMENITY_REQUEST });
   try {
-    const { data } = await api.put(`/amenities/${id}`, amenityData);
+    const { data } = await api.put(`${API_BASE_URL}/amenities/${id}`, amenityData);
     dispatch({ type: UPDATE_AMENITY_SUCCESS, payload: data });
   } catch (error) {
     dispatch({ type: UPDATE_AMENITY_FAILURE, payload: error.message });
@@ -66,7 +66,7 @@ export const updateAmenity = (id, amenityData) => async (dispatch) => {
 export const deleteAmenity = (id) => async (dispatch) => {
   dispatch({ type: DELETE_AMENITY_REQUEST });
   try {
-    await api.delete(`/amenities/${id}`);
+    await api.delete(`${API_BASE_URL}/amenities/${id}`);
     dispatch({ type: DELETE_AMENITY_SUCCESS, payload: id });
   } catch (error) {
     dispatch({ type: DELETE_AMENITY_FAILURE, payload: error.message });
