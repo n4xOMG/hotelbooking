@@ -14,7 +14,8 @@ const hotelSchema = new mongoose.Schema({
   amenities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Amenity", required: true }],
   ratings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Rating", required: true }],
   avgRating: { type: Number, default: 0 },
-  images: [String], // General hotel images
+  images: [String],
+  maxGuests: { type: Number, required: true, default: 1 },
   isAvailable: { type: Boolean, default: true },
   isProcessed: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },

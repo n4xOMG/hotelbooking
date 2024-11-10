@@ -2,13 +2,14 @@ const express = require("express");
 const { verifyToken } = require("../config/jwtConfig");
 const Booking = require("../models/Booking");
 const Hotel = require("../models/Hotel");
+const Room = require("../models/Room");
 
 const router = express.Router();
 
 // Create a new booking
 router.post("/", verifyToken, async (req, res) => {
-  const { hotelId, room, checkInDate, checkOutDate } = req.body;
-  const userId = req.user.id;
+  const { hotelId, roomId, checkInDate, checkOutDate, totalPrice } = req.body;
+  const userId = req.user._id;
 
   try {
     const hotel = await Hotel.findById(hotelId);
@@ -16,56 +17,88 @@ router.post("/", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Hotel not found" });
     }
 
-    const booking = new Booking({
+    const room = await Room.findById(roomId);
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    const newBooking = new Booking({
       user: userId,
       hotel: hotelId,
-      room,
-      bookingDate: new Date(),
+      room: roomId,
       checkInDate,
       checkOutDate,
-      totalPrice: room.price * ((new Date(checkOutDate) - new Date(checkInDate)) / (1000 * 60 * 60 * 24)),
+      totalPrice,
     });
 
-    await booking.save();
-    res.status(201).json({ message: "Booking created successfully", booking });
+    await newBooking.save();
+    res.status(201).json(newBooking);
   } catch (error) {
-    res.status(500).json({ message: `Server error: ${error}` });
+    res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
 
 // Get all bookings for a user
 router.get("/", verifyToken, async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user._id;
 
   try {
-    const bookings = await Booking.find({ user: userId }).populate("hotel room");
-    res.json(bookings);
+    const bookings = await Booking.find({ user: userId })
+      .populate("hotel", "name location")
+      .populate("room", "roomType size beds baths price");
+    res.status(200).json(bookings);
   } catch (error) {
-    res.status(500).json({ message: `Server error: ${error}` });
+    res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
 
 // Get a specific booking
 router.get("/:id", verifyToken, async (req, res) => {
   const bookingId = req.params.id;
-  const userId = req.user.id;
+  const userId = req.user._id;
 
   try {
-    const booking = await Booking.findOne({ _id: bookingId, user: userId }).populate("hotel room");
+    const booking = await Booking.findOne({ _id: bookingId, user: userId })
+      .populate("hotel", "name location")
+      .populate("room", "roomType size beds baths price");
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    res.json(booking);
+    res.status(200).json(booking);
   } catch (error) {
-    res.status(500).json({ message: `Server error: ${error}` });
+    res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
 
-// Cancel a booking
+// Update a booking
+router.put("/:id", verifyToken, async (req, res) => {
+  const bookingId = req.params.id;
+  const userId = req.user._id;
+  const { checkInDate, checkOutDate, totalPrice, status } = req.body;
+
+  try {
+    const booking = await Booking.findOne({ _id: bookingId, user: userId });
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    booking.checkInDate = checkInDate || booking.checkInDate;
+    booking.checkOutDate = checkOutDate || booking.checkOutDate;
+    booking.totalPrice = totalPrice || booking.totalPrice;
+    booking.status = status || booking.status;
+
+    await booking.save();
+    res.status(200).json(booking);
+  } catch (error) {
+    res.status(500).json({ message: `Server error: ${error.message}` });
+  }
+});
+
+// Delete a booking
 router.delete("/:id", verifyToken, async (req, res) => {
   const bookingId = req.params.id;
-  const userId = req.user.id;
+  const userId = req.user._id;
 
   try {
     const booking = await Booking.findOneAndDelete({ _id: bookingId, user: userId });
@@ -73,9 +106,9 @@ router.delete("/:id", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    res.json({ message: "Booking canceled successfully" });
+    res.status(200).json({ message: "Booking deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: `Server error: ${error}` });
+    res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
 
