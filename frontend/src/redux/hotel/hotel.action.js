@@ -35,6 +35,7 @@ export const fetchHotelById = (id) => async (dispatch) => {
   dispatch({ type: FETCH_HOTEL_REQUEST });
   try {
     const { data } = await axios.get(`${API_BASE_URL}/hotels/${id}`);
+    console.log(data);
     dispatch({ type: FETCH_HOTEL_SUCCESS, payload: data });
   } catch (error) {
     dispatch({ type: FETCH_HOTEL_FAILURE, payload: error.message });

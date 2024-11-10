@@ -1,21 +1,38 @@
-import { Box, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
-import React, { useEffect } from "react";
+import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAmenities } from "../../redux/amenity/amenity.action";
 import { fetchCategories } from "../../redux/category/category.action";
 import { fetchPropertyTypes } from "../../redux/propertyType/propertyType.action";
+import { debouncedFetchLocationSuggestions, fetchLocationSuggestions } from "../../utils/fetchLocationSuggestions";
+import { debounce } from "lodash";
 
 export default function PropertyDetails({ propertyDetails, setPropertyDetails }) {
   const dispatch = useDispatch();
   const { propertyTypes } = useSelector((state) => state.propertyType);
   const { categories } = useSelector((state) => state.category);
   const { amenities } = useSelector((state) => state.amenity);
-
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
   useEffect(() => {
     dispatch(fetchCategories());
     dispatch(fetchPropertyTypes());
     dispatch(fetchAmenities());
   }, [dispatch]);
+  const debouncedFetch = useCallback(
+    debounce(async (input) => {
+      const suggestions = await fetchLocationSuggestions(input);
+      setLocationSuggestions(suggestions);
+    }, 300),
+    []
+  );
+  const handleLocationChange = (event, value) => {
+    setPropertyDetails((prev) => ({ ...prev, location: value }));
+    if (value.length > 2) {
+      debouncedFetch(value);
+    } else {
+      setLocationSuggestions([]);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,7 +53,19 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
       </Typography>
 
       <TextField fullWidth label="Property Name" name="name" value={propertyDetails.name} onChange={handleChange} sx={{ mb: 2 }} />
-      <TextField fullWidth label="Location" name="location" value={propertyDetails.location} onChange={handleChange} sx={{ mb: 2 }} />
+      <Autocomplete
+        freeSolo
+        options={locationSuggestions || []}
+        getOptionLabel={(option) => option.description}
+        inputValue={propertyDetails.location}
+        onInputChange={handleLocationChange}
+        renderOption={(props, option) => (
+          <li {...props} key={option.id}>
+            {option.description}
+          </li>
+        )}
+        renderInput={(params) => <TextField {...params} label="Location" name="location" sx={{ mb: 2 }} />}
+      />
       <TextField
         fullWidth
         label="Description"

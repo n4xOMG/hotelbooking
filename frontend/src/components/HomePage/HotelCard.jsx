@@ -5,7 +5,7 @@ import { Star, LocationOn, Wifi, Restaurant, FitnessCenter } from "@mui/icons-ma
 export default function HotelCard({ hotel }) {
   return (
     <Card>
-      <CardMedia component="img" height="140" image={hotel.image} alt={hotel.name} />
+      <CardMedia component="img" height="140" image={hotel.images[0]} alt={hotel.name} />
       <CardContent>
         <Typography variant="h6">{hotel.name}</Typography>
         <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>

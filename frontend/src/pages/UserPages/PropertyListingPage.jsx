@@ -3,13 +3,13 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/HomePage/Header";
+import LoadingSpinner from "../../components/LoadingSpinner";
 import PricingAvailability from "../../components/PropertyListingPage/PricingAvailability";
 import PropertyDetails from "../../components/PropertyListingPage/PropertyDetails";
 import PropertyImages from "../../components/PropertyListingPage/PropertyImages";
 import RoomDetails from "../../components/PropertyListingPage/RoomDetails";
 import { createHotel } from "../../redux/hotel/hotel.action";
 import { UploadToCloudinary } from "../../utils/uploadToCloudinary";
-import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function PropertyListingPage() {
   const dispatch = useDispatch();
@@ -82,18 +82,17 @@ export default function PropertyListingPage() {
         <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
           <Header />
           <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Box sx={{ mb: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-              <Button variant="outlined">Save Draft</Button>
-              <Button variant="contained" onClick={handlePublish}>
-                Publish
-              </Button>
-            </Box>
-
             <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <PropertyDetails propertyDetails={propertyDetails} setPropertyDetails={setPropertyDetails} />
               <RoomDetails roomDetails={roomDetails} setRoomDetails={setRoomDetails} />
               <PricingAvailability pricingAvailability={pricingAvailability} setPricingAvailability={setPricingAvailability} />
               <PropertyImages images={images} setImages={setImages} />
+            </Box>
+            <Box sx={{ mb: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              <Button variant="outlined">Save Draft</Button>
+              <Button variant="contained" onClick={handlePublish}>
+                Publish
+              </Button>
             </Box>
           </Container>
         </Box>
