@@ -7,7 +7,7 @@ export default function HotelInfo({ hotel }) {
         {hotel.propertyType.type}
       </Typography>
       <Typography color="text.secondary">
-        300 guests · {hotel.rooms.size()} bedrooms · {hotel.totalBeds} beds · {hotel.totalBaths} baths
+        {hotel.maxGuests} guests · {hotel.rooms.length} bedrooms · {hotel.totalBeds} beds · {hotel.totalBaths} baths
       </Typography>
     </Box>
   );

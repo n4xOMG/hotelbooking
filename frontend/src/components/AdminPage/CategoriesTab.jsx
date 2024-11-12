@@ -24,15 +24,8 @@ import { Delete, Edit } from "@mui/icons-material";
 import { fetchCategories, createCategory, updateCategory, deleteCategory } from "../../redux/category/category.action";
 import LoadingSpinner from "../LoadingSpinner";
 import { FixedSizeList as List } from "react-window";
-const IconMenuItem = React.memo(({ index, style, data, onSelect }) => {
-  const option = data[index];
-  return (
-    <MenuItem key={option.value} value={option.value} style={style} onClick={() => onSelect(option.value)}>
-      {React.createElement(Icons[option.value])}
-      {option.label}
-    </MenuItem>
-  );
-});
+import { IconMenuItem } from "../IconMenuItem";
+
 export default function CategoriesTab() {
   const dispatch = useDispatch();
   const { categories, loading } = useSelector((state) => state.category);
@@ -155,7 +148,19 @@ export default function CategoriesTab() {
                 label="Category Name"
                 type="text"
                 fullWidth
+                required
                 value={categoryData.name}
+                onChange={handleInputChange}
+              />
+              <TextField
+                autoFocus
+                margin="dense"
+                name="description"
+                label="Category Description"
+                type="text"
+                fullWidth
+                required
+                value={categoryData.description}
                 onChange={handleInputChange}
               />
               <TextField
@@ -164,6 +169,7 @@ export default function CategoriesTab() {
                 label="Icon"
                 type="text"
                 fullWidth
+                required
                 value={categoryData.icon}
                 onClick={handleIconClick}
                 InputProps={{

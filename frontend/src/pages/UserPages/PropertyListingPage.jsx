@@ -22,10 +22,12 @@ export default function PropertyListingPage() {
     description: "",
     propertyType: "",
     category: "",
+    maxGuests: 1,
+    petFriendly: false,
     amenities: [],
   });
 
-  const [roomDetails, setRoomDetails] = useState([{ roomType: "", size: "", beds: 0, price: 0, isAvailable: true }]);
+  const [roomDetails, setRoomDetails] = useState([{ size: "", beds: 0, baths: 0, isAvailable: true }]);
 
   const [pricingAvailability, setPricingAvailability] = useState({
     pricePerNight: 0,
@@ -48,18 +50,18 @@ export default function PropertyListingPage() {
         location: propertyDetails.location,
         propertyType: propertyDetails.propertyType,
         categories: [propertyDetails.category],
+        maxGuests: propertyDetails.maxGuests,
+        petFriendly: propertyDetails.petFriendly,
         rooms: roomDetails.map((room) => ({
-          roomType: room.roomType,
           size: room.size,
           beds: room.beds,
           baths: room.baths,
-          price: room.price,
           isAvailable: room.isAvailable,
         })),
         totalRooms: roomDetails.length,
-        totalBeds: roomDetails.reduce((total, room) => total + room.beds, 1),
-        totalBaths: roomDetails.reduce((total, room) => total + room.baths, 1),
-        price: pricingAvailability.pricePerNight,
+        totalBeds: roomDetails.reduce((total, room) => total + room.beds, 0),
+        totalBaths: roomDetails.reduce((total, room) => total + room.baths, 0),
+        pricePerNight: pricingAvailability.pricePerNight,
         amenities: propertyDetails.amenities,
         images: imageUrls,
         isAvailable: pricingAvailability.isAvailable,

@@ -57,7 +57,7 @@ const categoryReducer = (state = initialState, action) => {
       return {
         ...state,
         loading: false,
-        categories: state.categories.map((category) => (category.id === action.payload.id ? action.payload : category)),
+        categories: state.categories.map((category) => (category._id === action.payload._id ? action.payload : category)),
       };
     case DELETE_CATEGORY_SUCCESS:
       return {

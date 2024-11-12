@@ -1,11 +1,11 @@
-import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, Switch, TextField, Typography } from "@mui/material";
+import { debounce } from "lodash";
 import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAmenities } from "../../redux/amenity/amenity.action";
 import { fetchCategories } from "../../redux/category/category.action";
 import { fetchPropertyTypes } from "../../redux/propertyType/propertyType.action";
-import { debouncedFetchLocationSuggestions, fetchLocationSuggestions } from "../../utils/fetchLocationSuggestions";
-import { debounce } from "lodash";
+import { fetchLocationSuggestions } from "../../utils/fetchLocationSuggestions";
 
 export default function PropertyDetails({ propertyDetails, setPropertyDetails }) {
   const dispatch = useDispatch();
@@ -35,8 +35,8 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setPropertyDetails((prev) => ({ ...prev, [name]: value }));
+    const { name, value, checked, type } = e.target;
+    setPropertyDetails((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
   const handleAmenityChange = (amenity) => {
@@ -76,6 +76,18 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
         rows={4}
         sx={{ mb: 2 }}
       />
+      <TextField
+        fullWidth
+        type="number"
+        min="1"
+        max="1000"
+        label="Max guests number"
+        name="maxGuests"
+        value={propertyDetails.maxGuests}
+        onChange={handleChange}
+        rows={4}
+        sx={{ mb: 2 }}
+      />
 
       <Box sx={{ display: "flex", gap: 2 }}>
         <TextField select label="Property Type" name="propertyType" value={propertyDetails.propertyType} onChange={handleChange} fullWidth>
@@ -109,6 +121,11 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
             />
           ))}
         </Box>
+        <FormControlLabel
+          control={<Switch name="petFriendly" checked={propertyDetails.petFriendly} onChange={handleChange} />}
+          label="Allow Pets"
+          sx={{ mb: 2 }}
+        />
       </Box>
     </Box>
   );

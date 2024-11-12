@@ -1,8 +1,9 @@
 import React from "react";
 import { Box, Card, CardContent, Typography, Button } from "@mui/material";
-export default function BookingSummary({ pricePerNight, numberOfNights, cleaningFee, serviceFee }) {
+export default function BookingSummary({ pricePerNight, numberOfNights }) {
   const subtotal = pricePerNight * numberOfNights;
-  const total = subtotal + cleaningFee + serviceFee;
+  const serviceFee = 0.1 * subtotal;
+  const total = subtotal + serviceFee;
 
   return (
     <Card>
@@ -23,10 +24,6 @@ export default function BookingSummary({ pricePerNight, numberOfNights, cleaning
               RM{pricePerNight.toLocaleString()} x {numberOfNights} nights
             </Typography>
             <Typography>RM{subtotal.toLocaleString()}</Typography>
-          </Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography>Cleaning fee</Typography>
-            <Typography>RM{cleaningFee.toLocaleString()}</Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>Service fee</Typography>

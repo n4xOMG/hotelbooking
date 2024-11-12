@@ -12,9 +12,9 @@ router.get("/", async (req, res) => {
     const hotels = await Hotel.find(filters)
       .populate("owner", "firstname lastname email")
       .populate("propertyType", "type icon")
-      .populate("categories", "name icon")
+      .populate("categories", "name description icon")
       .populate("rooms")
-      .populate("amenities", "name")
+      .populate("amenities", "name description icon")
       .populate("ratings");
     res.json(hotels);
   } catch (error) {
@@ -28,9 +28,9 @@ router.get("/:id", async (req, res) => {
     const hotel = await Hotel.findById(req.params.id)
       .populate("owner", "firstname lastname email")
       .populate("propertyType", "type icon")
-      .populate("categories", "name icon")
+      .populate("categories", "name description icon")
       .populate("rooms")
-      .populate("amenities", "name")
+      .populate("amenities", "name description icon")
       .populate("ratings");
     if (!hotel) {
       return res.status(404).json({ message: "Hotel not found" });
@@ -43,8 +43,22 @@ router.get("/:id", async (req, res) => {
 
 // Create a new hotel (hotel owner only)
 router.post("/", verifyToken, async (req, res) => {
-  const { name, description, location, propertyType, categories, rooms, totalRooms, totalBeds, totalBaths, price, amenities, images } =
-    req.body;
+  const {
+    name,
+    description,
+    location,
+    propertyType,
+    categories,
+    maxGuests,
+    petFriendly,
+    rooms,
+    totalRooms,
+    totalBeds,
+    totalBaths,
+    pricePerNight,
+    amenities,
+    images,
+  } = req.body;
 
   try {
     // Create room documents and get their IDs
@@ -64,11 +78,13 @@ router.post("/", verifyToken, async (req, res) => {
       location,
       propertyType,
       categories,
+      maxGuests,
+      petFriendly,
       rooms: roomIds,
       totalRooms,
       totalBeds,
       totalBaths,
-      price,
+      pricePerNight,
       amenities,
       images,
     };
@@ -93,8 +109,22 @@ router.put("/:id", verifyToken, async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    const { name, description, location, propertyType, categories, rooms, totalRooms, totalBeds, totalBaths, price, amenities, images } =
-      req.body;
+    const {
+      name,
+      description,
+      location,
+      propertyType,
+      categories,
+      maxGuests,
+      petFriendly,
+      rooms,
+      totalRooms,
+      totalBeds,
+      totalBaths,
+      pricePerNight,
+      amenities,
+      images,
+    } = req.body;
 
     // Create room documents and get their IDs if new rooms are provided
     let roomIds = hotel.rooms;
@@ -115,11 +145,13 @@ router.put("/:id", verifyToken, async (req, res) => {
       location,
       propertyType,
       categories,
+      maxGuests,
+      petFriendly,
       rooms: roomIds,
       totalRooms,
       totalBeds,
       totalBaths,
-      price,
+      pricePerNight,
       amenities,
       images,
     };

@@ -11,6 +11,7 @@ import HotelInfo from "../../components/HotelDetails/HotelInfo";
 import AmenitiesList from "../../components/HotelDetails/AmenitiesList";
 import DateRangePickerComponent from "../../components/HotelDetails/DateRangePickerComponent";
 import BookingSummary from "../../components/HotelDetails/BookingSummary";
+import Header from "../../components/HomePage/Header";
 
 export default function HotelDetails() {
   const { id } = useParams();
@@ -21,9 +22,7 @@ export default function HotelDetails() {
   const today = new Date();
   const [dateRange, setDateRange] = useState([today, today]);
   const numberOfNights = dateRange[0] && dateRange[1] ? differenceInDays(dateRange[1], dateRange[0]) : 1;
-  const pricePerNight = 94457;
-  const cleaningFee = 1729677;
-  const serviceFee = 59408282;
+
   useEffect(() => {
     setLoading(true);
     try {
@@ -34,30 +33,29 @@ export default function HotelDetails() {
       setLoading(false);
     }
   }, [dispatch, id]);
+
   return (
     <>
-      {hotel && loading ? (
+      {loading ? (
         <LoadingSpinner />
       ) : (
-        <Box sx={{ maxWidth: "1200px", mx: "auto", px: 2, py: 4 }}>
-          <HotelDetailHeader title={hotel?.name} />
-          {hotel && hotel.images ? <HotelImages images={hotel.images} /> : <Typography variant="body1">No images available.</Typography>}
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={8}>
-              <HotelInfo />
-              <AmenitiesList />
-              <DateRangePickerComponent dateRange={dateRange} setDateRange={setDateRange} />
+        hotel && (
+          <Box sx={{ maxWidth: "1200px", mx: "auto", px: 2, py: 4 }}>
+            <Header />
+            <HotelDetailHeader title={hotel?.name} />
+            {hotel?.images ? <HotelImages images={hotel?.images} /> : <Typography variant="body1">No images available.</Typography>}
+            <Grid container spacing={4}>
+              <Grid item xs={12} md={8}>
+                <HotelInfo hotel={hotel} />
+                <AmenitiesList amenities={hotel.amenities} />
+                <DateRangePickerComponent dateRange={dateRange} setDateRange={setDateRange} />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <BookingSummary pricePerNight={hotel?.pricePerNight} numberOfNights={numberOfNights} />
+              </Grid>
             </Grid>
-            <Grid item xs={12} md={4}>
-              <BookingSummary
-                pricePerNight={pricePerNight}
-                numberOfNights={numberOfNights}
-                cleaningFee={cleaningFee}
-                serviceFee={serviceFee}
-              />
-            </Grid>
-          </Grid>
-        </Box>
+          </Box>
+        )
       )}
     </>
   );

@@ -57,13 +57,14 @@ const amenityReducer = (state = initialState, action) => {
       return {
         ...state,
         loading: false,
-        amenities: state.amenities.map((amenity) => (amenity.id === action.payload.id ? action.payload : amenity)),
+        amenities: state.amenities.map((amenity) => (amenity._id === action.payload._id ? action.payload : amenity)),
       };
+
     case DELETE_AMENITY_SUCCESS:
       return {
         ...state,
         loading: false,
-        amenities: state.amenities.filter((amenity) => amenity.id !== action.payload),
+        amenities: state.amenities.filter((amenity) => amenity._id !== action.payload),
       };
     case CREATE_AMENITY_FAILURE:
     case FETCH_AMENITIES_FAILURE:

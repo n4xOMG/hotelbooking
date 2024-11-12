@@ -10,14 +10,14 @@ router.post("/", verifyToken, async (req, res) => {
     return res.status(403).json({ message: "Access denied" });
   }
 
-  const { name } = req.body;
+  const { name, description, icon } = req.body;
 
   try {
-    const newAmenity = new Amenity({ name });
+    const newAmenity = new Amenity({ name, description, icon });
     await newAmenity.save();
     res.status(201).json(newAmenity);
   } catch (error) {
-    res.status(500).json({ message: `Server error: ${error}` });
+    res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
 
@@ -25,9 +25,9 @@ router.post("/", verifyToken, async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const amenities = await Amenity.find();
-    res.json(amenities);
+    res.status(200).json(amenities);
   } catch (error) {
-    res.status(500).json({ message: `Server error: ${error}` });
+    res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
 
@@ -38,9 +38,9 @@ router.get("/:id", async (req, res) => {
     if (!amenity) {
       return res.status(404).json({ message: "Amenity not found" });
     }
-    res.json(amenity);
+    res.status(200).json(amenity);
   } catch (error) {
-    res.status(500).json({ message: `Server error: ${error}` });
+    res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
 
@@ -50,16 +50,16 @@ router.put("/:id", verifyToken, async (req, res) => {
     return res.status(403).json({ message: "Access denied" });
   }
 
-  const { name } = req.body;
+  const { name, description, icon } = req.body;
 
   try {
-    const amenity = await Amenity.findByIdAndUpdate(req.params.id, { name }, { new: true });
+    const amenity = await Amenity.findByIdAndUpdate(req.params.id, { name, description, icon }, { new: true });
     if (!amenity) {
       return res.status(404).json({ message: "Amenity not found" });
     }
-    res.json(amenity);
+    res.status(200).json(amenity);
   } catch (error) {
-    res.status(500).json({ message: `Server error: ${error}` });
+    res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
 
@@ -74,9 +74,9 @@ router.delete("/:id", verifyToken, async (req, res) => {
     if (!amenity) {
       return res.status(404).json({ message: "Amenity not found" });
     }
-    res.json({ message: "Amenity deleted successfully" });
+    res.status(200).json({ message: "Amenity deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: `Server error: ${error}` });
+    res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
 

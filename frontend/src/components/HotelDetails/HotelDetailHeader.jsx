@@ -3,7 +3,7 @@ import { Box, Button, Typography } from "@mui/material";
 import { Favorite } from "@mui/icons-material";
 export default function HotelDetailHeader({ title }) {
   return (
-    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", my: 2 }}>
       <Typography variant="h4" fontWeight="bold">
         {title}
       </Typography>
