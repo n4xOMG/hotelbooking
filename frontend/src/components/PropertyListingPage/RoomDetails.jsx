@@ -10,7 +10,7 @@ export default function RoomDetails({ roomDetails, setRoomDetails }) {
   };
 
   const handleAddRoom = () => {
-    setRoomDetails([...roomDetails, { roomType: "", size: "", beds: 0, baths: 0, price: 0, isAvailable: true }]);
+    setRoomDetails([...roomDetails, { size: "", beds: 0, baths: 0, price: 0, isAvailable: true }]);
   };
 
   return (
@@ -21,14 +21,6 @@ export default function RoomDetails({ roomDetails, setRoomDetails }) {
 
       {roomDetails.map((room, index) => (
         <Box key={index} sx={{ mb: 2 }}>
-          <TextField
-            fullWidth
-            label="Room Type"
-            name="roomType"
-            value={room.roomType}
-            onChange={(e) => handleChange(index, e)}
-            sx={{ mb: 2 }}
-          />
           <TextField fullWidth label="Room Size" name="size" value={room.size} onChange={(e) => handleChange(index, e)} sx={{ mb: 2 }} />
           <TextField
             fullWidth

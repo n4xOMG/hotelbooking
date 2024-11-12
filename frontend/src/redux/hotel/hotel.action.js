@@ -17,6 +17,12 @@ import {
   BOOK_HOTEL_REQUEST,
   BOOK_HOTEL_SUCCESS,
   BOOK_HOTEL_FAILURE,
+  FETCH_HOTELS_BY_USER_REQUEST,
+  FETCH_HOTELS_BY_USER_SUCCESS,
+  FETCH_HOTELS_BY_USER_FAILURE,
+  DELETE_HOTEL_REQUEST,
+  DELETE_HOTEL_SUCCESS,
+  DELETE_HOTEL_FAILURE,
 } from "./hotel.actionType";
 
 // Fetch all hotels
@@ -36,9 +42,23 @@ export const fetchHotelById = (id) => async (dispatch) => {
   try {
     const { data } = await axios.get(`${API_BASE_URL}/hotels/${id}`);
     console.log(data);
+
     dispatch({ type: FETCH_HOTEL_SUCCESS, payload: data });
+    return { payload: data };
   } catch (error) {
     dispatch({ type: FETCH_HOTEL_FAILURE, payload: error.message });
+  }
+};
+
+// Fetch single hotel by user id
+export const fetchHotelByUser = (id) => async (dispatch) => {
+  dispatch({ type: FETCH_HOTELS_BY_USER_REQUEST });
+  try {
+    const { data } = await api.get(`${API_BASE_URL}/hotels/user/${id}`);
+    console.log(data);
+    dispatch({ type: FETCH_HOTELS_BY_USER_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({ type: FETCH_HOTELS_BY_USER_FAILURE, payload: error.message });
   }
 };
 
@@ -61,6 +81,16 @@ export const updateHotel = (id, hotelData) => async (dispatch) => {
     dispatch({ type: UPDATE_HOTEL_SUCCESS, payload: data });
   } catch (error) {
     dispatch({ type: UPDATE_HOTEL_FAILURE, payload: error.message });
+  }
+};
+// Delete an existing hotel
+export const deleteHotel = (id) => async (dispatch) => {
+  dispatch({ type: DELETE_HOTEL_REQUEST });
+  try {
+    const { data } = await api.delete(`${API_BASE_URL}/hotels/${id}`);
+    dispatch({ type: DELETE_HOTEL_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({ type: DELETE_HOTEL_FAILURE, payload: error.message });
   }
 };
 

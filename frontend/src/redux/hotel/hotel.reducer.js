@@ -14,10 +14,14 @@ import {
   BOOK_HOTEL_REQUEST,
   BOOK_HOTEL_SUCCESS,
   BOOK_HOTEL_FAILURE,
+  FETCH_HOTELS_BY_USER_SUCCESS,
+  FETCH_HOTELS_BY_USER_FAILURE,
+  DELETE_HOTEL_SUCCESS,
 } from "./hotel.actionType";
 
 const initialState = {
   hotels: [],
+  hotelsByUser: [],
   hotel: null,
   loading: false,
   error: null,
@@ -41,6 +45,12 @@ const hotelReducer = (state = initialState, action) => {
         loading: false,
         hotels: action.payload,
       };
+    case FETCH_HOTELS_BY_USER_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        hotelsByUser: action.payload,
+      };
     case FETCH_HOTEL_SUCCESS:
       return {
         ...state,
@@ -55,7 +65,14 @@ const hotelReducer = (state = initialState, action) => {
         loading: false,
         hotel: action.payload,
       };
+    case DELETE_HOTEL_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        hotels: state.hotels.filter((hotel) => hotel._id !== action.payload),
+      };
     case FETCH_HOTELS_FAILURE:
+    case FETCH_HOTELS_BY_USER_FAILURE:
     case FETCH_HOTEL_FAILURE:
     case CREATE_HOTEL_FAILURE:
     case UPDATE_HOTEL_FAILURE:

@@ -99,6 +99,9 @@ export default function Header() {
                 <MenuItem key="list-properties" onClick={() => navigate("/list-properties")}>
                   List your properties
                 </MenuItem>,
+                <MenuItem key="manage-hotels" onClick={() => navigate("/hotels/manage-hotels")}>
+                  Manage your hotels
+                </MenuItem>,
                 user.role === "admin" && (
                   <MenuItem key="admin" onClick={() => navigate("/admin")}>
                     Admin

@@ -1,21 +1,22 @@
-import { Box, Button, Container } from "@mui/material";
-import React, { useState } from "react";
+import { Box, Button, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/HomePage/Header";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import PricingAvailability from "../../components/PropertyListingPage/PricingAvailability";
 import PropertyDetails from "../../components/PropertyListingPage/PropertyDetails";
 import PropertyImages from "../../components/PropertyListingPage/PropertyImages";
 import RoomDetails from "../../components/PropertyListingPage/RoomDetails";
-import { createHotel } from "../../redux/hotel/hotel.action";
+import { createHotel, fetchHotelById, updateHotel } from "../../redux/hotel/hotel.action";
 import { UploadToCloudinary } from "../../utils/uploadToCloudinary";
 
 export default function PropertyListingPage() {
+  const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
   const { user } = useSelector((store) => store.user);
+  const [loading, setLoading] = useState(false);
   const [propertyDetails, setPropertyDetails] = useState({
     name: "",
     location: "",
@@ -26,21 +27,49 @@ export default function PropertyListingPage() {
     petFriendly: false,
     amenities: [],
   });
-
   const [roomDetails, setRoomDetails] = useState([{ size: "", beds: 0, baths: 0, isAvailable: true }]);
-
   const [pricingAvailability, setPricingAvailability] = useState({
     pricePerNight: 0,
     isAvailable: true,
   });
-
   const [images, setImages] = useState([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [dialogTitle, setDialogTitle] = useState("");
+
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      dispatch(fetchHotelById(id)).then((response) => {
+        const hotelData = response.payload;
+        setPropertyDetails({
+          name: hotelData.name,
+          location: hotelData.location,
+          description: hotelData.description,
+          propertyType: hotelData.propertyType._id,
+          category: hotelData.categories[0]._id,
+          maxGuests: hotelData.maxGuests,
+          petFriendly: hotelData.petFriendly,
+          amenities: hotelData.amenities.map((amenity) => amenity._id),
+        });
+        setRoomDetails(hotelData.rooms);
+        setPricingAvailability({
+          pricePerNight: hotelData.pricePerNight,
+          isAvailable: hotelData.isAvailable,
+        });
+        setImages(hotelData.images.map((url) => ({ file: null, preview: url })));
+        setLoading(false);
+      });
+    }
+  }, [dispatch, id]);
 
   const handlePublish = async () => {
     try {
       setLoading(true);
       // Upload images to Cloudinary and retrieve URLs
-      const imageUrls = await Promise.all(images.map((image) => UploadToCloudinary(image.file, `${user.username}_hotel_images`)));
+      const imageUrls = await Promise.all(
+        images.map((image) => (image.file ? UploadToCloudinary(image.file, `${user.username}_hotel_images`) : image.preview))
+      );
 
       // Prepare hotel data
       const hotelData = {
@@ -68,37 +97,57 @@ export default function PropertyListingPage() {
       };
 
       console.log("Hotel Data", hotelData);
-      dispatch(createHotel(hotelData));
+      if (id) {
+        await dispatch(updateHotel(id, hotelData));
+        setDialogTitle("Success");
+        setDialogMessage("Hotel updated successfully.");
+      } else {
+        await dispatch(createHotel(hotelData));
+        setDialogTitle("Success");
+        setDialogMessage("Hotel added successfully.");
+      }
     } catch (error) {
       console.error("Error uploading images:", error);
+      setDialogTitle("Error");
+      setDialogMessage("Failed to save hotel. Please try again.");
     } finally {
       setLoading(false);
+      setDialogOpen(true);
     }
   };
 
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    navigate("/hotels/manage-hotels");
+  };
+
   return (
-    <>
-      {loading ? (
-        <LoadingSpinner />
-      ) : (
-        <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
-          <Header />
-          <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <PropertyDetails propertyDetails={propertyDetails} setPropertyDetails={setPropertyDetails} />
-              <RoomDetails roomDetails={roomDetails} setRoomDetails={setRoomDetails} />
-              <PricingAvailability pricingAvailability={pricingAvailability} setPricingAvailability={setPricingAvailability} />
-              <PropertyImages images={images} setImages={setImages} />
-            </Box>
-            <Box sx={{ mb: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-              <Button variant="outlined">Save Draft</Button>
-              <Button variant="contained" onClick={handlePublish}>
-                Publish
-              </Button>
-            </Box>
-          </Container>
-        </Box>
-      )}
-    </>
+    <Container>
+      <Header />
+      {loading && <LoadingSpinner />}
+      <Box sx={{ mb: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
+        <Button variant="outlined">Save Draft</Button>
+        <Button variant="contained" onClick={handlePublish}>
+          {id ? "Update" : "Publish"}
+        </Button>
+      </Box>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <PropertyDetails propertyDetails={propertyDetails} setPropertyDetails={setPropertyDetails} />
+        <RoomDetails roomDetails={roomDetails} setRoomDetails={setRoomDetails} />
+        <PricingAvailability pricingAvailability={pricingAvailability} setPricingAvailability={setPricingAvailability} />
+        <PropertyImages images={images} setImages={setImages} />
+      </Box>
+      <Dialog open={dialogOpen} onClose={handleDialogClose}>
+        <DialogTitle>{dialogTitle}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{dialogMessage}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} color="primary">
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
   );
 }

@@ -41,6 +41,26 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// Get hotels by user
+router.get("/user/:userId", verifyToken, async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const hotels = await Hotel.find({ owner: userId })
+      .populate("owner", "firstname lastname email")
+      .populate("propertyType", "type icon")
+      .populate("categories", "name description icon")
+      .populate("rooms")
+      .populate("amenities", "name description icon");
+    if (!hotels || hotels.length === 0) {
+      return res.status(404).json({ message: "No hotels found for this user" });
+    }
+    res.json(hotels);
+  } catch (error) {
+    res.status(500).json({ message: `Server error: ${error}` });
+  }
+});
+
 // Create a new hotel (hotel owner only)
 router.post("/", verifyToken, async (req, res) => {
   const {
@@ -105,7 +125,7 @@ router.put("/:id", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Hotel not found" });
     }
 
-    if (hotel.owner.toString() !== req.user._id.toString()) {
+    if (hotel.owner.toString() !== req.user.id.toString()) {
       return res.status(403).json({ message: "Access denied" });
     }
 
@@ -171,11 +191,11 @@ router.delete("/:id", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Hotel not found" });
     }
 
-    if (hotel.owner.toString() !== req.user._id.toString()) {
+    if (hotel.owner.toString() !== req.user.id.toString()) {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    await hotel.remove();
+    await Hotel.deleteOne({ _id: req.params.id });
     res.json({ message: "Hotel deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: `Server error: ${error}` });

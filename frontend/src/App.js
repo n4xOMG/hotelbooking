@@ -15,6 +15,7 @@ import PropertyListingPage from "./pages/UserPages/PropertyListingPage";
 import UserProfile from "./pages/UserPages/UserProfile";
 import { getCurrentUserByJwt } from "./redux/user/user.action";
 import { isTokenExpired } from "./utils/isTokenExpired";
+import ManageHotelPage from "./pages/UserPages/ManageHotelPage";
 function App() {
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.user, shallowEqual);
@@ -45,10 +46,12 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/sign-in" element={<SignIn />} />
         <Route path="/sign-up" element={<SignUp />} />
-        <Route path="/profile" element={<UserProfile />} />
+        <Route path="/profile" element={user?.username ? <UserProfile /> : <HomePage />} />
         <Route path="/message" element={<MessagePage />} />
         <Route path="/hotels/:id" element={<HotelDetails />} />
         <Route path="/list-properties" element={<PropertyListingPage />} />
+        <Route path="/list-properties/:id" element={<PropertyListingPage />} />
+        <Route path="/hotels/manage-hotels" element={user?.username ? <ManageHotelPage /> : <HomePage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/admin/*" element={user?.role === "admin" ? <AdminPage /> : <HomePage />} />
