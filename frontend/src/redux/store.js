@@ -7,11 +7,13 @@ import categoryReducer from "./category/category.reducer";
 import propertyTypeReducer from "./propertyType/propertyType.reducer";
 import amenityReducer from "./amenity/amenity.reducer";
 import hotelReducer from "./hotel/hotel.reducer";
+import bookingReducer from "./booking/booking.reducer";
 
 const rootReducers = combineReducers({
   auth: authReducer,
   user: userReducer,
   hotel: hotelReducer,
+  booking: bookingReducer,
   payment: paymentReducer,
   category: categoryReducer,
   propertyType: propertyTypeReducer,

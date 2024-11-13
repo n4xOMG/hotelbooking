@@ -2,14 +2,13 @@ const express = require("express");
 const { verifyToken } = require("../config/jwtConfig");
 const Booking = require("../models/Booking");
 const Hotel = require("../models/Hotel");
-const Room = require("../models/Room");
 
 const router = express.Router();
 
 // Create a new booking
 router.post("/", verifyToken, async (req, res) => {
-  const { hotelId, roomId, checkInDate, checkOutDate, totalPrice } = req.body;
-  const userId = req.user._id;
+  const { hotelId, checkInDate, checkOutDate, totalPrice } = req.body;
+  const userId = req.user.id;
 
   try {
     const hotel = await Hotel.findById(hotelId);
@@ -17,15 +16,9 @@ router.post("/", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Hotel not found" });
     }
 
-    const room = await Room.findById(roomId);
-    if (!room) {
-      return res.status(404).json({ message: "Room not found" });
-    }
-
     const newBooking = new Booking({
       user: userId,
       hotel: hotelId,
-      room: roomId,
       checkInDate,
       checkOutDate,
       totalPrice,
@@ -39,13 +32,39 @@ router.post("/", verifyToken, async (req, res) => {
 });
 
 // Get all bookings for a user
-router.get("/", verifyToken, async (req, res) => {
-  const userId = req.user._id;
+router.get("/user", verifyToken, async (req, res) => {
+  const userId = req.user.id;
 
   try {
-    const bookings = await Booking.find({ user: userId })
+    const bookings = await Booking.find({ user: userId }).populate("hotel", "name location");
+    res.status(200).json(bookings);
+  } catch (error) {
+    res.status(500).json({ message: `Server error: ${error.message}` });
+  }
+});
+
+// Get bookings by hotel
+router.get("/hotel/:hotelId", verifyToken, async (req, res) => {
+  const hotelId = req.params.hotelId;
+
+  try {
+    const bookings = await Booking.find({ hotel: hotelId }).populate("user", "firstname lastname email");
+    res.status(200).json(bookings);
+  } catch (error) {
+    res.status(500).json({ message: `Server error: ${error.message}` });
+  }
+});
+
+// Get bookings for hotels managed by the user
+router.get("/managed", verifyToken, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const hotels = await Hotel.find({ owner: userId });
+    const hotelIds = hotels.map((hotel) => hotel._id);
+    const bookings = await Booking.find({ hotel: { $in: hotelIds } })
       .populate("hotel", "name location")
-      .populate("room", "roomType size beds baths price");
+      .populate("user", "firstname lastname email");
     res.status(200).json(bookings);
   } catch (error) {
     res.status(500).json({ message: `Server error: ${error.message}` });
@@ -55,12 +74,10 @@ router.get("/", verifyToken, async (req, res) => {
 // Get a specific booking
 router.get("/:id", verifyToken, async (req, res) => {
   const bookingId = req.params.id;
-  const userId = req.user._id;
+  const userId = req.user.id;
 
   try {
-    const booking = await Booking.findOne({ _id: bookingId, user: userId })
-      .populate("hotel", "name location")
-      .populate("room", "roomType size beds baths price");
+    const booking = await Booking.findOne({ _id: bookingId, user: userId }).populate("hotel", "name location");
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
@@ -74,7 +91,7 @@ router.get("/:id", verifyToken, async (req, res) => {
 // Update a booking
 router.put("/:id", verifyToken, async (req, res) => {
   const bookingId = req.params.id;
-  const userId = req.user._id;
+  const userId = req.user.id;
   const { checkInDate, checkOutDate, totalPrice, status } = req.body;
 
   try {
@@ -98,7 +115,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 // Delete a booking
 router.delete("/:id", verifyToken, async (req, res) => {
   const bookingId = req.params.id;
-  const userId = req.user._id;
+  const userId = req.user.id;
 
   try {
     const booking = await Booking.findOneAndDelete({ _id: bookingId, user: userId });
@@ -111,5 +128,30 @@ router.delete("/:id", verifyToken, async (req, res) => {
     res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
+router.get("/check-availability/:hotelId", async (req, res) => {
+  const { hotelId } = req.params;
+  const { startDate, endDate } = req.query;
 
+  try {
+    // Parse dates from query parameters
+    const parsedStartDate = new Date(startDate);
+    const parsedEndDate = new Date(endDate);
+
+    // Find any bookings that overlap with the requested date range
+    const overlappingBookings = await Booking.find({
+      hotel: hotelId,
+      $or: [
+        {
+          checkInDate: { $lte: parsedEndDate },
+          checkOutDate: { $gte: parsedStartDate },
+        },
+      ],
+    });
+
+    const isAvailable = overlappingBookings.length === 0;
+    res.json({ isAvailable, overlappingBookings });
+  } catch (error) {
+    res.status(500).json({ message: `Server error: ${error.message}` });
+  }
+});
 module.exports = router;

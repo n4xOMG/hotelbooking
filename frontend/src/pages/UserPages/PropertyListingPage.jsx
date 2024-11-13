@@ -125,12 +125,7 @@ export default function PropertyListingPage() {
     <Container>
       <Header />
       {loading && <LoadingSpinner />}
-      <Box sx={{ mb: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-        <Button variant="outlined">Save Draft</Button>
-        <Button variant="contained" onClick={handlePublish}>
-          {id ? "Update" : "Publish"}
-        </Button>
-      </Box>
+
       <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <PropertyDetails propertyDetails={propertyDetails} setPropertyDetails={setPropertyDetails} />
         <RoomDetails roomDetails={roomDetails} setRoomDetails={setRoomDetails} />
@@ -148,6 +143,14 @@ export default function PropertyListingPage() {
           </Button>
         </DialogActions>
       </Dialog>
+      <Box sx={{ mb: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
+        <Button variant="outlined" onClick={() => navigate("/")}>
+          Cancel
+        </Button>
+        <Button variant="contained" onClick={handlePublish}>
+          {id ? "Update" : "Publish"}
+        </Button>
+      </Box>
     </Container>
   );
 }

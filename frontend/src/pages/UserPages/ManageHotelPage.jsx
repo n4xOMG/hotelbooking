@@ -1,19 +1,20 @@
+import { Add } from "@mui/icons-material";
+import { Box, Button, CssBaseline, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Box, Button, CssBaseline, Typography, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
-import { HotelList } from "../../components/ManageHotelPage/HotelList";
-import { Sidebar } from "../../components/ManageHotelPage/Sidebar";
-import { DashboardOverview } from "../../components/ManageHotelPage/DashboardOverview";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import LoadingSpinner from "../../components/LoadingSpinner";
-import { fetchHotelByUser, deleteHotel } from "../../redux/hotel/hotel.action";
-import { Add } from "@mui/icons-material";
 import Header from "../../components/HomePage/Header";
+import LoadingSpinner from "../../components/LoadingSpinner";
+import { DashboardOverview } from "../../components/ManageHotelPage/DashboardOverview";
+import { HotelList } from "../../components/ManageHotelPage/HotelList";
+import { deleteHotel, fetchHotelByUser } from "../../redux/hotel/hotel.action";
+import BookingManagement from "../../components/ManageHotelPage/BookingManagement";
+import { fetchManagedBookings } from "../../redux/booking/booking.action";
 
 export default function ManageHotelPage() {
-  const [selectedView, setSelectedView] = useState("dashboard");
   const { user } = useSelector((store) => store.user);
-  const { hotels } = useSelector((store) => store.hotel);
+  const { hotelsByUser } = useSelector((store) => store.hotel);
+  const { bookings } = useSelector((state) => state.booking);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -21,15 +22,20 @@ export default function ManageHotelPage() {
   const [selectedHotelId, setSelectedHotelId] = useState(null);
 
   useEffect(() => {
-    try {
-      setLoading(true);
-      dispatch(fetchHotelByUser(user?._id));
-    } catch (e) {
-      console.log("Error loading hotels: ", e);
-    } finally {
-      setLoading(false);
-    }
-  }, [dispatch]);
+    const fetchHotels = async () => {
+      try {
+        setLoading(true);
+        await dispatch(fetchHotelByUser(user?._id));
+        await dispatch(fetchManagedBookings(user?._id));
+      } catch (e) {
+        console.log("Error loading hotels: ", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHotels();
+  }, [dispatch, user?._id]);
 
   const handleCreateHotel = () => {
     navigate("/list-properties");
@@ -56,15 +62,14 @@ export default function ManageHotelPage() {
 
   return (
     <>
-      {loading && !hotels ? (
+      {loading && !hotelsByUser ? (
         <LoadingSpinner />
       ) : (
         <Box display="flex">
           <CssBaseline />
-          <Sidebar selectedView={selectedView} setSelectedView={setSelectedView} />
-          <Box component="main" flex={1} p={4} bgcolor="grey.100">
+          <Box component="main" flex={1} bgcolor="grey.100">
             <Header />
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" p={4} mb={4}>
               <Typography variant="h4" fontWeight="bold">
                 Dashboard
               </Typography>
@@ -72,8 +77,9 @@ export default function ManageHotelPage() {
                 Create New Hotel
               </Button>
             </Box>
-            <DashboardOverview />
-            <HotelList hotels={hotels} onEditHotel={handleEditHotel} onDeleteHotel={handleDeleteHotel} />
+            <DashboardOverview hotels={hotelsByUser} />
+            <HotelList hotels={hotelsByUser} onEditHotel={handleEditHotel} onDeleteHotel={handleDeleteHotel} />
+            <BookingManagement bookings={bookings} />
           </Box>
         </Box>
       )}

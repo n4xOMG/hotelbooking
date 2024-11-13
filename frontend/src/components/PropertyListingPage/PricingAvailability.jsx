@@ -22,7 +22,7 @@ export default function PricingAvailability({ pricingAvailability, setPricingAva
       />
 
       <FormControlLabel
-        control={<Switch name="available" checked={pricingAvailability.isAvailable} onChange={handleChange} />}
+        control={<Switch name="isAvailable" checked={pricingAvailability.isAvailable} onChange={handleChange} />}
         label="Available for Booking"
         sx={{ mb: 2 }}
       />

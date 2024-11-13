@@ -1,22 +1,19 @@
 import {
-  FETCH_HOTELS_REQUEST,
-  FETCH_HOTELS_SUCCESS,
-  FETCH_HOTELS_FAILURE,
-  FETCH_HOTEL_REQUEST,
-  FETCH_HOTEL_SUCCESS,
-  FETCH_HOTEL_FAILURE,
+  CREATE_HOTEL_FAILURE,
   CREATE_HOTEL_REQUEST,
   CREATE_HOTEL_SUCCESS,
-  CREATE_HOTEL_FAILURE,
+  DELETE_HOTEL_SUCCESS,
+  FETCH_HOTELS_BY_USER_FAILURE,
+  FETCH_HOTELS_BY_USER_SUCCESS,
+  FETCH_HOTELS_FAILURE,
+  FETCH_HOTELS_REQUEST,
+  FETCH_HOTELS_SUCCESS,
+  FETCH_HOTEL_FAILURE,
+  FETCH_HOTEL_REQUEST,
+  FETCH_HOTEL_SUCCESS,
+  UPDATE_HOTEL_FAILURE,
   UPDATE_HOTEL_REQUEST,
   UPDATE_HOTEL_SUCCESS,
-  UPDATE_HOTEL_FAILURE,
-  BOOK_HOTEL_REQUEST,
-  BOOK_HOTEL_SUCCESS,
-  BOOK_HOTEL_FAILURE,
-  FETCH_HOTELS_BY_USER_SUCCESS,
-  FETCH_HOTELS_BY_USER_FAILURE,
-  DELETE_HOTEL_SUCCESS,
 } from "./hotel.actionType";
 
 const initialState = {
@@ -33,7 +30,6 @@ const hotelReducer = (state = initialState, action) => {
     case FETCH_HOTEL_REQUEST:
     case CREATE_HOTEL_REQUEST:
     case UPDATE_HOTEL_REQUEST:
-    case BOOK_HOTEL_REQUEST:
       return {
         ...state,
         loading: true,
@@ -58,25 +54,29 @@ const hotelReducer = (state = initialState, action) => {
         hotel: action.payload,
       };
     case CREATE_HOTEL_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        hotelsByUser: [...state.hotelsByUser, action.payload],
+      };
     case UPDATE_HOTEL_SUCCESS:
-    case BOOK_HOTEL_SUCCESS:
       return {
         ...state,
         loading: false,
         hotel: action.payload,
+        hotelsByUser: state.hotelsByUser.map((hotel) => (hotel._id === action.payload._id ? action.payload : hotel)),
       };
     case DELETE_HOTEL_SUCCESS:
       return {
         ...state,
         loading: false,
-        hotels: state.hotels.filter((hotel) => hotel._id !== action.payload),
+        hotelsByUser: state.hotelsByUser.filter((hotel) => hotel._id !== action.payload),
       };
     case FETCH_HOTELS_FAILURE:
     case FETCH_HOTELS_BY_USER_FAILURE:
     case FETCH_HOTEL_FAILURE:
     case CREATE_HOTEL_FAILURE:
     case UPDATE_HOTEL_FAILURE:
-    case BOOK_HOTEL_FAILURE:
       return {
         ...state,
         loading: false,

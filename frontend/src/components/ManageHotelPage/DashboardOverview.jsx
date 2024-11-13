@@ -1,8 +1,8 @@
-import { Box, Typography, Paper, Grid } from "@mui/material";
+import { Grid, Paper, Typography } from "@mui/material";
 
-export function DashboardOverview() {
+export function DashboardOverview({ hotels }) {
   const stats = [
-    { label: "Total Hotels", value: 12 },
+    { label: "Total Hotels", value: `${hotels.length}` },
     { label: "Active Bookings", value: 48 },
     { label: "Average Rating", value: 4.6 },
   ];

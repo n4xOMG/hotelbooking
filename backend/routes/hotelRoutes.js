@@ -77,6 +77,7 @@ router.post("/", verifyToken, async (req, res) => {
     totalBaths,
     pricePerNight,
     amenities,
+    isAvailable,
     images,
   } = req.body;
 
@@ -106,6 +107,7 @@ router.post("/", verifyToken, async (req, res) => {
       totalBaths,
       pricePerNight,
       amenities,
+      isAvailable,
       images,
     };
 
@@ -143,6 +145,7 @@ router.put("/:id", verifyToken, async (req, res) => {
       totalBaths,
       pricePerNight,
       amenities,
+      isAvailable,
       images,
     } = req.body;
 
@@ -173,6 +176,7 @@ router.put("/:id", verifyToken, async (req, res) => {
       totalBaths,
       pricePerNight,
       amenities,
+      isAvailable,
       images,
     };
 

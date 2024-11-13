@@ -7,33 +7,31 @@ const { verifyToken } = require("../config/jwtConfig");
 const router = express.Router();
 
 // Create a new payment
-router.post("/create-payment-intent", verifyToken, async (req, res) => {
-  const { amount, currency = "usd", paymentMethodType = "card" } = req.body;
+router.post("/create-payment-intent", async (req, res) => {
+  const { amount, currency } = req.body;
 
   try {
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency,
-      payment_method_types: [paymentMethodType],
     });
 
-    res.status(200).send({
-      clientSecret: paymentIntent.client_secret,
-    });
+    res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
-    res.status(500).send({ error: error.message });
+    res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
 
 // Confirm the payment
 router.post("/confirm-payment", verifyToken, async (req, res) => {
   const { paymentIntentId, bookingId } = req.body;
-
+  const userId = req.user.id;
   try {
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
     if (paymentIntent.status === "succeeded") {
       const payment = new Payment({
+        user: userId,
         booking: bookingId,
         amount: paymentIntent.amount,
         paymentStatus: "completed",

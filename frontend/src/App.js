@@ -16,6 +16,7 @@ import UserProfile from "./pages/UserPages/UserProfile";
 import { getCurrentUserByJwt } from "./redux/user/user.action";
 import { isTokenExpired } from "./utils/isTokenExpired";
 import ManageHotelPage from "./pages/UserPages/ManageHotelPage";
+import HotelCheckout from "./pages/UserPages/HotelCheckout";
 function App() {
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.user, shallowEqual);
@@ -51,6 +52,7 @@ function App() {
         <Route path="/hotels/:id" element={<HotelDetails />} />
         <Route path="/list-properties" element={<PropertyListingPage />} />
         <Route path="/list-properties/:id" element={<PropertyListingPage />} />
+        <Route path="/checkout/:id" element={<HotelCheckout />} />
         <Route path="/hotels/manage-hotels" element={user?.username ? <ManageHotelPage /> : <HomePage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
