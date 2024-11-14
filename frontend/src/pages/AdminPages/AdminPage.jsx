@@ -7,9 +7,9 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Box, Drawer, Button, IconButton, Tab, Tabs, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import CategoriesTab from "../../components/AdminPage/CategoriesTab";
-import PropertyTypesTab from "../../components/AdminPage/PropertyTypesTab";
-import AmenitiesTab from "../../components/AdminPage/AmenitiesTab";
+import CategoriesTab from "../../components/AdminPage/Category/CategoriesTab";
+import PropertyTypesTab from "../../components/AdminPage/PropertyType/PropertyTypesTab";
+import AmenitiesTab from "../../components/AdminPage/Amenity/AmenitiesTab";
 export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("categories");

@@ -22,7 +22,7 @@ import {
 export const createAmenity = (amenityData) => async (dispatch) => {
   dispatch({ type: CREATE_AMENITY_REQUEST });
   try {
-    const { data } = await api.post("/amenities", amenityData);
+    const { data } = await api.post(`${API_BASE_URL}/amenities`, amenityData);
     dispatch({ type: CREATE_AMENITY_SUCCESS, payload: data });
   } catch (error) {
     dispatch({ type: CREATE_AMENITY_FAILURE, payload: error.message });
