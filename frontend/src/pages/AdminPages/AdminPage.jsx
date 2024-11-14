@@ -4,12 +4,14 @@ import HomeIcon from "@mui/icons-material/Home";
 import BedDoubleIcon from "@mui/icons-material/KingBed";
 import AlertCircleIcon from "@mui/icons-material/Report";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts"
 import { Box, Drawer, Button, IconButton, Tab, Tabs, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CategoriesTab from "../../components/AdminPage/Category/CategoriesTab";
 import PropertyTypesTab from "../../components/AdminPage/PropertyType/PropertyTypesTab";
 import AmenitiesTab from "../../components/AdminPage/Amenity/AmenitiesTab";
+import UsersTab from "../../components/AdminPage/User/UsersTab";
 export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("categories");
@@ -21,6 +23,7 @@ export default function AdminPage() {
     { name: "Property Types", icon: <HomeIcon />, id: "propertyTypes" },
     { name: "Reports", icon: <AlertCircleIcon />, id: "reports" },
     { name: "Amenities", icon: <BedDoubleIcon />, id: "amenities" },
+    { name: "Users", icon: <ManageAccountsIcon />, id: "users" },
   ];
 
   return (
@@ -108,6 +111,7 @@ export default function AdminPage() {
           {activeTab === "categories" && <CategoriesTab />}
           {activeTab === "propertyTypes" && <PropertyTypesTab />}
           {activeTab === "amenities" && <AmenitiesTab />}
+          {activeTab === "users" && <UsersTab />}
         </Box>
       </Box>
     </Box>
