@@ -55,13 +55,20 @@ router.post("/confirm-payment", verifyToken, async (req, res) => {
 
 // Get payment history for a user
 router.get("/history", verifyToken, async (req, res) => {
-  const userId = req.user.id;
-
   try {
-    const payments = await Payment.find({ user: userId }).populate("booking");
-    res.status(200).json(payments);
+    const payments = await Payment.find({ user: req.user.id })
+      .populate({
+        path: "booking",
+        populate: {
+          path: "hotel",
+          select: "name location",
+        },
+      })
+      .populate("user", "firstname lastname email");
+
+    res.json(payments);
   } catch (error) {
-    res.status(500).send({ error: error.message });
+    res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
 

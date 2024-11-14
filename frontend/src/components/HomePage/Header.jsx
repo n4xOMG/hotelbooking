@@ -1,10 +1,10 @@
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MountainIcon from "@mui/icons-material/Terrain";
-import { Box, IconButton, Link, Menu, MenuItem, Typography } from "@mui/material";
+import { Avatar, Box, IconButton, Link, Menu, MenuItem, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logoutAction } from "../../redux/auth/auth.action";
+import { getOptimizedImageUrl } from "../../utils/optimizeImages";
 
 export default function Header() {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -75,7 +75,11 @@ export default function Header() {
         ))}
 
         <IconButton onClick={handleMenuOpen} sx={{ color: "inherit" }}>
-          <AccountCircleIcon sx={{ width: 20, height: 20 }} />
+          {user ? (
+            <Avatar src={getOptimizedImageUrl(user?.avatarUrl)} sx={{ width: 30, height: 30, mr: 2 }} />
+          ) : (
+            <Avatar>{user?.username[0]}</Avatar>
+          )}
         </IconButton>
 
         {/* Dropdown Menu */}

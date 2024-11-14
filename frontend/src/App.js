@@ -17,6 +17,7 @@ import { getCurrentUserByJwt } from "./redux/user/user.action";
 import { isTokenExpired } from "./utils/isTokenExpired";
 import ManageHotelPage from "./pages/UserPages/ManageHotelPage";
 import HotelCheckout from "./pages/UserPages/HotelCheckout";
+import EmailVerification from "./pages/Authentication/EmailVerification";
 function App() {
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.user, shallowEqual);
@@ -47,6 +48,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/sign-in" element={<SignIn />} />
         <Route path="/sign-up" element={<SignUp />} />
+        <Route path="/verify-email" element={<EmailVerification />} />
         <Route path="/profile" element={user?.username ? <UserProfile /> : <HomePage />} />
         <Route path="/message" element={<MessagePage />} />
         <Route path="/hotels/:id" element={<HotelDetails />} />

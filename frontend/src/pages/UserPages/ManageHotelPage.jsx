@@ -62,7 +62,7 @@ export default function ManageHotelPage() {
 
   return (
     <>
-      {loading || bookingsLoading ? (
+      {loading ? (
         <LoadingSpinner />
       ) : (
         <Box display="flex">

@@ -26,7 +26,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const hotel = await Hotel.findById(req.params.id)
-      .populate("owner", "firstname lastname email")
+      .populate("owner", "username avatarUrl firstname lastname email")
       .populate("propertyType", "type icon")
       .populate("categories", "name description icon")
       .populate("rooms")
@@ -47,7 +47,7 @@ router.get("/user/:userId", verifyToken, async (req, res) => {
 
   try {
     const hotels = await Hotel.find({ owner: userId })
-      .populate("owner", "firstname lastname email")
+      .populate("owner", "username avatarUrl firstname lastname email")
       .populate("propertyType", "type icon")
       .populate("categories", "name description icon")
       .populate("rooms")

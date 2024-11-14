@@ -8,6 +8,7 @@ import propertyTypeReducer from "./propertyType/propertyType.reducer";
 import amenityReducer from "./amenity/amenity.reducer";
 import hotelReducer from "./hotel/hotel.reducer";
 import bookingReducer from "./booking/booking.reducer";
+import ratingReducer from "./rating/rating.reducer";
 
 const rootReducers = combineReducers({
   auth: authReducer,
@@ -15,6 +16,7 @@ const rootReducers = combineReducers({
   hotel: hotelReducer,
   booking: bookingReducer,
   payment: paymentReducer,
+  rating: ratingReducer,
   category: categoryReducer,
   propertyType: propertyTypeReducer,
   amenity: amenityReducer,

@@ -30,7 +30,7 @@ export const CheckoutForm = ({ bookingDetails, onSuccess }) => {
       );
 
       // Confirm payment
-      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(response.payload.clientSecret, {
+      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(response.clientSecret, {
         payment_method: {
           card: elements.getElement(CardElement),
           billing_details: {

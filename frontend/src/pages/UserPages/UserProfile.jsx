@@ -2,15 +2,19 @@ import React, { useState } from "react";
 import { Box, Container, Tabs, Tab } from "@mui/material";
 import PersonalInfo from "../../components/UserProfile/PersonalInfo";
 import PaymentHistory from "../../components/UserProfile/PaymentHistory";
+import BookingHistory from "../../components/UserProfile/BookingHistory";
 import ProfileSidebar from "../../components/UserProfile/ProfileSidebar";
+import { useSelector } from "react-redux";
+
 const categories = [
   { label: "Personal Info", value: "personal-info" },
   { label: "Payment History", value: "payment-history" },
+  { label: "Booking History", value: "booking-history" },
 ];
 
 export default function UserProfile() {
   const [activeTab, setActiveTab] = useState("personal-info");
-
+  const { user } = useSelector((state) => state.user);
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
@@ -34,8 +38,9 @@ export default function UserProfile() {
           ))}
         </Tabs>
 
-        {activeTab === "personal-info" && <PersonalInfo />}
+        {activeTab === "personal-info" && <PersonalInfo user={user} />}
         {activeTab === "payment-history" && <PaymentHistory />}
+        {activeTab === "booking-history" && <BookingHistory />}
       </Container>
     </Box>
   );

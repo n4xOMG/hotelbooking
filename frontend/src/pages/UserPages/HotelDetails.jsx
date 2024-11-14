@@ -11,11 +11,14 @@ import HotelDetailHeader from "../../components/HotelDetails/HotelDetailHeader";
 import HotelImages from "../../components/HotelDetails/HotelImages";
 import HotelInfo from "../../components/HotelDetails/HotelInfo";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import RatingSection from "../../components/HotelDetails/RatingSection";
+import OwnerCard from "../../components/HotelDetails/OwnerCard";
 import { fetchHotelById } from "../../redux/hotel/hotel.action";
 
 export default function HotelDetails() {
   const { id } = useParams();
   const { hotel } = useSelector((state) => state.hotel);
+  const { user } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const today = new Date();
@@ -48,6 +51,7 @@ export default function HotelDetails() {
                 <HotelInfo hotel={hotel} />
                 <AmenitiesList amenities={hotel.amenities} />
                 <DateRangePickerComponent dateRange={dateRange} setDateRange={setDateRange} hotelId={hotel._id} />
+                <RatingSection hotelId={hotel._id} />
               </Grid>
               <Grid item xs={12} md={4}>
                 <BookingSummary
@@ -56,6 +60,7 @@ export default function HotelDetails() {
                   dateRange={dateRange}
                   hotelId={hotel._id}
                 />
+                {hotel.owner && <OwnerCard owner={hotel.owner} currentUser={user} />}
               </Grid>
             </Grid>
           </Box>

@@ -1,6 +1,7 @@
 const express = require("express");
 const { verifyToken } = require("../config/jwtConfig");
 const Rating = require("../models/Rating");
+const Hotel = require("../models/Hotel");
 
 const router = express.Router();
 
@@ -56,6 +57,23 @@ router.get("/:id", async (req, res) => {
     res.json(rating);
   } catch (error) {
     res.status(500).json({ message: `Server error: ${error}` });
+  }
+});
+
+// Get ratings by hotel
+router.get("/hotel/:hotelId", async (req, res) => {
+  const { hotelId } = req.params;
+
+  try {
+    const hotel = await Hotel.findById(hotelId).populate("ratings");
+    if (!hotel) {
+      return res.status(404).json({ message: "Hotel not found" });
+    }
+
+    const ratings = await Rating.find({ _id: { $in: hotel.ratings } }).populate("user", "firstname lastname email");
+    res.status(200).json(ratings);
+  } catch (error) {
+    res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
 

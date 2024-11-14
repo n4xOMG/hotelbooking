@@ -2,13 +2,12 @@ import { Alert, Box, TextField, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { checkAvailability } from "../../redux/booking/booking.action";
+import { formatDate } from "../../utils/formatDate";
 
 export default function DateRangePickerComponent({ dateRange, setDateRange, hotelId }) {
   const dispatch = useDispatch();
   const [error, setError] = useState(null);
-  const formatDate = (date) => {
-    return date.toISOString().split("T")[0]; // Format date as YYYY-MM-DD
-  };
+
   const handleDateChange = async (startDate, endDate) => {
     if (!startDate || !endDate) return;
 
