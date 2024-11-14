@@ -9,8 +9,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Menu,
-  MenuItem,
   IconButton,
   TextField,
   Dialog,
@@ -19,41 +17,35 @@ import {
   DialogTitle,
   InputAdornment,
   Paper,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
-import { Delete, Edit, Search } from "@mui/icons-material";
-import { fetchUsers,  updateUser } from "../../../redux/user/user.action";
+import { Edit, Search } from "@mui/icons-material";
+import { fetchUsers, updateUser } from "../../../redux/user/user.action";
 import LoadingSpinner from "../../LoadingSpinner";
 import './UsersTab.css';
 
 export default function UsersTab() {
   const dispatch = useDispatch();
   const { users, loading } = useSelector((state) => state.user);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [userData, setUserData] = useState({ firstname: "", lastname: "", username: "", phoneNumber: "", email: "", role: "", gender: "", birthdate: "" });
   const [searchQuery, setSearchQuery] = useState(""); // state for user search
-
-  const filteredUsers = users.filter((user) =>
-    user.firstname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.lastname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const [roleFilter, setRoleFilter] = useState(""); // state for role filter
 
   useEffect(() => {
     dispatch(fetchUsers());
   }, [dispatch]);
 
-  const handleMenuOpen = (event, user) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedUser(user);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedUser(null);
-  };
+  const filteredUsers = Array.isArray(users) ? users.filter((user) =>
+    (user.firstname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.lastname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
+    (roleFilter === "" || user.role === roleFilter)
+  ) : [];
 
   const handleDialogOpen = (user = { firstname: "", lastname: "", username: "", phoneNumber: "", email: "", role: "", gender: "", birthdate: "" }) => {
     setUserData(user);
@@ -73,16 +65,8 @@ export default function UsersTab() {
   const handleSaveUser = () => {
     if (userData._id) {
       dispatch(updateUser(userData._id, userData));
-    } else {
-      dispatch(createUser(userData));
     }
     handleDialogClose();
-  };
-
-  const handleDeleteUser = (id) => {
-    dispatch(deleteUser(id));
-    dispatch(fetchUsers());
-    handleMenuClose();
   };
 
   return (
@@ -105,9 +89,21 @@ export default function UsersTab() {
                 ),
               }}
             />
-            <Button variant="contained" color="primary" onClick={() => handleDialogOpen()}>
-              Add User
-            </Button>
+            <FormControl variant="outlined" sx={{ minWidth: 200 }}>
+              <InputLabel>Role</InputLabel>
+              <Select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                label="Role"
+              >
+                <MenuItem value="">
+                  <em>All</em>
+                </MenuItem>
+                <MenuItem value="admin">Admin</MenuItem>
+                <MenuItem value="user">User</MenuItem>
+                <MenuItem value="hotelOwner">Hotel Owner</MenuItem>
+              </Select>
+            </FormControl>
           </Box>
           <TableContainer component={Paper}>
             <Table>
@@ -117,7 +113,6 @@ export default function UsersTab() {
                   <TableCell>Phone</TableCell>
                   <TableCell>Email</TableCell>
                   <TableCell>Role</TableCell>
-                  <TableCell>Booked Hotels</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -128,20 +123,10 @@ export default function UsersTab() {
                     <TableCell>{user.phoneNumber}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{user.role}</TableCell>
-                    <TableCell>{user.bookedHotels.length}</TableCell>
                     <TableCell>
                       <IconButton onClick={() => handleDialogOpen(user)}>
                         <Edit fontSize="small" />
                       </IconButton>
-                      <IconButton onClick={(event) => handleMenuOpen(event, user)}>
-                        <Delete fontSize="small" />
-                      </IconButton>
-                      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                        <MenuItem onClick={() => handleDeleteUser(selectedUser._id)}>
-                          <Delete fontSize="small" sx={{ mr: 1 }} />
-                          Delete
-                        </MenuItem>
-                      </Menu>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -150,7 +135,7 @@ export default function UsersTab() {
           </TableContainer>
 
           <Dialog open={openDialog} onClose={handleDialogClose}>
-            <DialogTitle>{selectedUser ? "Edit User" : "Add User"}</DialogTitle>
+            <DialogTitle>{userData._id ? "Edit User" : "Add User"}</DialogTitle>
             <DialogContent>
               <TextField
                 autoFocus
