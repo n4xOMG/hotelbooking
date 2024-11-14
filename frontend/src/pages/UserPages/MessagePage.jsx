@@ -1,10 +1,21 @@
 import { Box } from "@mui/material";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import Header from "../../components/HomePage/Header";
+import { useChat } from "../../utils/ChatContext";
 import LeftSidebar from "../../components/MessagePage/LeftSiderbar";
 import MainChatArea from "../../components/MessagePage/MainChatArea ";
-import Header from "../../components/HomePage/Header";
+
 export default function MessagePage() {
+  const { userId } = useParams();
   const [activeTab, setActiveTab] = useState("all");
+  const { joinChat } = useChat();
+
+  useEffect(() => {
+    if (userId) {
+      joinChat(userId);
+    }
+  }, [userId, joinChat]);
 
   return (
     <>

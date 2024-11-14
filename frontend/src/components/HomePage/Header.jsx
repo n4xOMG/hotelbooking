@@ -94,7 +94,7 @@ export default function Header() {
                 <MenuItem key="profile" divider onClick={() => navigate("/profile")}>
                   Profile
                 </MenuItem>,
-                <MenuItem key="messages" onClick={() => navigate("/message")}>
+                <MenuItem key="messages" onClick={() => navigate("/messages")}>
                   Your Messages
                 </MenuItem>,
                 <MenuItem key="bookings" onClick={handleMenuClose}>

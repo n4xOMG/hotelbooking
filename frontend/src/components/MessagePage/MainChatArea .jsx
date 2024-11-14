@@ -13,7 +13,7 @@ const MainChatArea = ({ user2Id, chatId }) => {
     if (user?.id && user2Id) {
       joinChat(user.id, user2Id);
     }
-  }, [user?.id, user2Id]);
+  }, [user?.id, user2Id, joinChat]);
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
@@ -21,51 +21,54 @@ const MainChatArea = ({ user2Id, chatId }) => {
       setNewMessage("");
     }
   };
-  <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-    <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider", display: "flex", justifyContent: "space-between" }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <Avatar alt="United Family" src="/placeholder.svg" />
-        <Box>
-          <Typography fontWeight="bold">United Family</Typography>
-          <Typography variant="body2" color="green">
-            Rashford is typing...
-          </Typography>
-        </Box>
-      </Box>
-      <Box sx={{ display: "flex", gap: 1 }}>
-        <IconButton>
-          <VideoCall />
-        </IconButton>
-        <IconButton>
-          <Call />
-        </IconButton>
-        <IconButton>
-          <MoreVert />
-        </IconButton>
-      </Box>
-    </Box>
-    <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
-      {/* Messages */}
-      {messages.map((msg, index) => (
-        <Box key={index} sx={{ display: "flex", gap: 2, mb: 3 }}>
-          <Avatar alt={msg.sender.firstname} src="/placeholder.svg" />
+
+  return (
+    <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider", display: "flex", justifyContent: "space-between" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Avatar alt="United Family" src="/placeholder.svg" />
           <Box>
-            <Typography fontWeight="bold">{msg.sender.firstname}</Typography>
-            <Typography variant="body2">{msg.message}</Typography>
+            <Typography fontWeight="bold">United Family</Typography>
+            <Typography variant="body2" color="green">
+              Rashford is typing...
+            </Typography>
           </Box>
         </Box>
-      ))}
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <IconButton>
+            <VideoCall />
+          </IconButton>
+          <IconButton>
+            <Call />
+          </IconButton>
+          <IconButton>
+            <MoreVert />
+          </IconButton>
+        </Box>
+      </Box>
+      <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+        {/* Messages */}
+        {messages.map((msg, index) => (
+          <Box key={index} sx={{ display: "flex", gap: 2, mb: 3 }}>
+            <Avatar alt={msg.sender.firstname} src="/placeholder.svg" />
+            <Box>
+              <Typography fontWeight="bold">{msg.sender.firstname}</Typography>
+              <Typography variant="body2">{msg.message}</Typography>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+      <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1 }}>
+        <IconButton>
+          <Add />
+        </IconButton>
+        <InputBase placeholder="Write a message..." sx={{ flex: 1 }} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
+        <Button variant="contained" onClick={handleSendMessage}>
+          <Send />
+        </Button>
+      </Box>
     </Box>
-    <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1 }}>
-      <IconButton>
-        <Add />
-      </IconButton>
-      <InputBase placeholder="Write a message..." sx={{ flex: 1 }} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
-      <Button variant="contained" onClick={handleSendMessage}>
-        <Send />
-      </Button>
-    </Box>
-  </Box>;
+  );
 };
 
 export default MainChatArea;

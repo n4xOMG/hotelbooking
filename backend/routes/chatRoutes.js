@@ -6,8 +6,8 @@ const { verifyToken } = require("../config/jwtConfig");
 router.get("/", verifyToken, async (req, res) => {
   try {
     const chats = await Chat.find({ participants: req.user.id })
-      .populate("participants", "firstname lastname username")
-      .populate("messages.sender", "firstname lastname username")
+      .populate("participants", "avatarUrl firstname lastname username")
+      .populate("messages.sender", "avatarUrl firstname lastname username")
       .sort({ "messages.timestamp": -1 });
     res.json(chats);
   } catch (error) {
@@ -20,8 +20,8 @@ router.get("/:userId", verifyToken, async (req, res) => {
     const chat = await Chat.findOne({
       participants: { $all: [req.user.id, req.params.userId] },
     })
-      .populate("participants", "firstname lastname username")
-      .populate("messages.sender", "firstname lastname username");
+      .populate("participants", "avatarUrl firstname lastname username")
+      .populate("messages.sender", "avatarUrl firstname lastname username");
 
     if (!chat) {
       const newChat = new Chat({

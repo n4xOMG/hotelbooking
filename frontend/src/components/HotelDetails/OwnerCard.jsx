@@ -1,9 +1,15 @@
 import { Avatar, Box, Button, Card, CardContent, CardHeader, Typography } from "@mui/material";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { getOptimizedImageUrl } from "../../utils/optimizeImages";
 
 const OwnerCard = ({ owner, currentUser }) => {
   const isOwner = currentUser?._id === owner?._id;
+  const navigate = useNavigate();
+
+  const handleMessageClick = () => {
+    navigate(`/messages/${owner._id}`);
+  };
 
   return (
     <Card sx={{ mt: 3, borderRadius: 2, boxShadow: 3 }}>
@@ -29,7 +35,7 @@ const OwnerCard = ({ owner, currentUser }) => {
       <CardContent>
         {!isOwner && (
           <Box sx={{ display: "flex", justifyContent: "center" }}>
-            <Button variant="contained" color="primary" sx={{ textTransform: "none" }}>
+            <Button variant="contained" color="primary" sx={{ textTransform: "none" }} onClick={handleMessageClick}>
               Message
             </Button>
           </Box>
