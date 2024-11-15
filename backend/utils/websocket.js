@@ -1,15 +1,24 @@
 const { Server } = require("socket.io");
 const Chat = require("../models/Chat");
 const User = require("../models/User");
+
+// Updated getOrCreateChat with population
 const getOrCreateChat = async (user1Id, user2Id) => {
   try {
     let chat = await Chat.findOne({
       participants: { $all: [user1Id, user2Id] },
-    });
+    })
+      .populate("participants", "firstname lastname username avatarUrl")
+      .populate("messages.sender", "firstname lastname username avatarUrl"); // Populate sender
 
     if (!chat) {
       chat = new Chat({ participants: [user1Id, user2Id], messages: [] });
       await chat.save();
+
+      // Populate after creating new chat
+      chat = await Chat.findById(chat._id)
+        .populate("participants", "firstname lastname username avatarUrl")
+        .populate("messages.sender", "firstname lastname username avatarUrl");
     }
 
     return chat;
@@ -31,6 +40,7 @@ function initWebSocket(server) {
   io.on("connection", (socket) => {
     console.log("A user connected:", socket.id);
 
+    // Handle joining a chat
     socket.on("joinChat", async (user1Id, user2Id, callback) => {
       try {
         const chat = await getOrCreateChat(user1Id, user2Id);
@@ -45,11 +55,13 @@ function initWebSocket(server) {
       }
     });
 
+    // Handle leaving a chat
     socket.on("leaveChat", (chatId) => {
       socket.leave(chatId);
       console.log(`User ${socket.id} left chat room: ${chatId}`);
     });
 
+    // Handle sending a message
     socket.on("sendMessage", async (data) => {
       const { chatId, senderId, message } = data;
 
@@ -80,8 +92,8 @@ function initWebSocket(server) {
 
       try {
         const updatedChat = await Chat.findByIdAndUpdate(chatId, { $push: { messages: newMessage } }, { new: true })
-          .populate("participants", "firstname lastname username")
-          .populate("messages.sender", "firstname lastname username");
+          .populate("participants", "firstname lastname username avatarUrl")
+          .populate("messages.sender", "firstname lastname username avatarUrl"); // Populate sender
 
         io.to(chatId).emit("receiveMessage", updatedChat);
       } catch (error) {
@@ -89,6 +101,7 @@ function initWebSocket(server) {
       }
     });
 
+    // Handle disconnection
     socket.on("disconnect", () => {
       console.log("User disconnected");
     });

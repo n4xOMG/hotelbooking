@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import Header from "../../components/HomePage/Header";
 import LeftSidebar from "../../components/MessagePage/LeftSiderbar";
@@ -13,7 +13,6 @@ export default function MessagePage() {
   const { joinChat, isConnected } = useChat();
   const { user } = useSelector((store) => store.user);
   const [currentChatId, setCurrentChatId] = useState(null);
-  const dispatch = useDispatch();
 
   useEffect(() => {
     if (isConnected && user?._id && chatId && user2Id) {
@@ -30,12 +29,12 @@ export default function MessagePage() {
   }, [isConnected, user?._id, chatId, user2Id, joinChat]);
 
   return (
-    <>
+    <Box sx={{ maxHeight: "100vh" }}>
       <Header />
       <Box sx={{ display: "flex", height: "100vh", bgcolor: "background.default" }}>
         <LeftSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         <MainChatArea chatId={currentChatId} />
       </Box>
-    </>
+    </Box>
   );
 }

@@ -18,6 +18,7 @@ const MainChatArea = ({ chatId }) => {
 
   return (
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      {/* Header */}
       <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider", display: "flex", justifyContent: "space-between" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Avatar alt="Chat Avatar" src="/placeholder.svg" />
@@ -37,18 +38,49 @@ const MainChatArea = ({ chatId }) => {
           </IconButton>
         </Box>
       </Box>
+
+      {/* Messages */}
       <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
-        {/* Messages */}
-        {messages.map((msg, index) => (
-          <Box key={index} sx={{ display: "flex", gap: 2, mb: 3 }}>
-            <Avatar alt={msg.sender?.firstname || "Unknown"} src={msg.sender?.avatarUrl || "/placeholder.svg"} />
-            <Box>
-              <Typography fontWeight="bold">{msg.sender?.username || "Unknown"}</Typography>
-              <Typography variant="body2">{msg.message}</Typography>
-            </Box>
-          </Box>
-        ))}
+        {messages.length > 0 ? (
+          messages.map((msg, index) => {
+            const isCurrentUser = msg.sender?._id === user._id;
+            return (
+              <Box
+                key={index}
+                sx={{
+                  display: "flex",
+                  flexDirection: isCurrentUser ? "row-reverse" : "row",
+                  gap: 2,
+                  mb: 3,
+                }}
+              >
+                <Avatar
+                  alt={isCurrentUser ? "You" : msg.sender?.firstname || "Unknown"}
+                  src={isCurrentUser ? user.avatarUrl || "/placeholder.svg" : msg.sender?.avatarUrl || "/placeholder.svg"}
+                />
+                <Box
+                  sx={{
+                    maxWidth: "60%",
+                    bgcolor: isCurrentUser ? "primary.main" : "grey.300",
+                    color: isCurrentUser ? "white" : "black",
+                    borderRadius: 2,
+                    p: 1.5,
+                  }}
+                >
+                  <Typography fontWeight="bold">{isCurrentUser ? "You" : msg.sender?.username || "Unknown"}</Typography>
+                  <Typography variant="body2">{msg.message}</Typography>
+                </Box>
+              </Box>
+            );
+          })
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            No messages yet. Start the conversation!
+          </Typography>
+        )}
       </Box>
+
+      {/* Message Input */}
       <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1 }}>
         <IconButton>
           <Add />

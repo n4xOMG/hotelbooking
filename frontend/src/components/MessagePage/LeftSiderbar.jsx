@@ -31,8 +31,6 @@ const LeftSidebar = ({ activeTab, setActiveTab }) => {
       </Box>
       <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)} variant="fullWidth" sx={{ px: 2 }}>
         <Tab label="All" value="all" />
-        <Tab label="Personal" value="personal" />
-        <Tab label="Groups" value="groups" />
       </Tabs>
       <Box sx={{ px: 2, py: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Typography variant="body2" color="text.secondary">
