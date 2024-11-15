@@ -2,13 +2,25 @@ import { Avatar, Box, Button, Card, CardContent, CardHeader, Typography } from "
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { getOptimizedImageUrl } from "../../utils/optimizeImages";
+import { useChat } from "../../utils/ChatContext"; // Import useChat
 
 const OwnerCard = ({ owner, currentUser }) => {
   const isOwner = currentUser?._id === owner?._id;
   const navigate = useNavigate();
+  const { joinChat } = useChat(); // Destructure joinChat from ChatContext
 
-  const handleMessageClick = () => {
-    navigate(`/messages/${owner._id}`);
+  const handleMessageClick = async () => {
+    try {
+      // Join or create chat with the owner
+      const chat = await joinChat(currentUser._id, owner._id);
+      console.log("Chat joined:", chat);
+
+      // Navigate to the message page with chatId and user2Id
+      navigate(`/messages/${chat._id}/${owner._id}`);
+    } catch (error) {
+      console.error("Failed to join chat:", error);
+      // Optionally, display an error message to the user
+    }
   };
 
   return (

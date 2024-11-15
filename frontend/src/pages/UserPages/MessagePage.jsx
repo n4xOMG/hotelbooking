@@ -1,28 +1,40 @@
 import { Box } from "@mui/material";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import Header from "../../components/HomePage/Header";
-import { useChat } from "../../utils/ChatContext";
 import LeftSidebar from "../../components/MessagePage/LeftSiderbar";
-import MainChatArea from "../../components/MessagePage/MainChatArea ";
+import MainChatArea from "../../components/MessagePage/MainChatArea";
+import { useChat } from "../../utils/ChatContext";
 
 export default function MessagePage() {
-  const { userId } = useParams();
+  const { chatId, user2Id } = useParams();
   const [activeTab, setActiveTab] = useState("all");
-  const { joinChat } = useChat();
+  const { joinChat, isConnected } = useChat();
+  const { user } = useSelector((store) => store.user);
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    if (userId) {
-      joinChat(userId);
+    if (isConnected && user?._id && chatId && user2Id) {
+      console.log("Joining chat with:", { chatId, user2Id });
+      joinChat(user._id, user2Id)
+        .then((chat) => {
+          console.log("Chat joined:", chat);
+          setCurrentChatId(chat._id);
+        })
+        .catch((error) => {
+          console.error("Failed to join chat:", error);
+        });
     }
-  }, [userId, joinChat]);
+  }, [isConnected, user?._id, chatId, user2Id, joinChat]);
 
   return (
     <>
       <Header />
       <Box sx={{ display: "flex", height: "100vh", bgcolor: "background.default" }}>
         <LeftSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-        <MainChatArea />
+        <MainChatArea chatId={currentChatId} />
       </Box>
     </>
   );

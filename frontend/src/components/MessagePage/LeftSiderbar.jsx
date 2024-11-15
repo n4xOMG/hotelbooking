@@ -9,13 +9,14 @@ const LeftSidebar = ({ activeTab, setActiveTab }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { chats } = useSelector((state) => state.chat);
+  const { user } = useSelector((store) => store.user);
 
   useEffect(() => {
     dispatch(fetchUserChats());
   }, [dispatch]);
 
-  const handleChatClick = (chatId) => {
-    navigate(`/messages/${chatId}`);
+  const handleChatClick = (chatId, user2Id) => {
+    navigate(`/messages/${chatId}/${user2Id}`);
   };
 
   return (
@@ -40,26 +41,31 @@ const LeftSidebar = ({ activeTab, setActiveTab }) => {
         <PushPin fontSize="small" />
       </Box>
       <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
-        {chats.map((chat) => (
-          <Box
-            key={chat._id}
-            sx={{ display: "flex", gap: 2, p: 1, borderRadius: 1, "&:hover": { bgcolor: "action.hover" } }}
-            onClick={() => handleChatClick(chat._id)}
-          >
-            <Avatar alt={chat.name} src={chat.avatarUrl || "/placeholder.svg"} />
-            <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography fontWeight="medium">{chat.name}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {chat.lastMessageTime}
+        {chats.map((chat) => {
+          const otherParticipant = chat.participants.find((p) => p._id !== user._id);
+          if (!otherParticipant) return null;
+
+          return (
+            <Box
+              key={chat._id}
+              sx={{ display: "flex", gap: 2, p: 1, borderRadius: 1, "&:hover": { bgcolor: "action.hover" } }}
+              onClick={() => handleChatClick(chat._id, otherParticipant._id)}
+            >
+              <Avatar alt={otherParticipant.username} src={otherParticipant.avatarUrl || "/placeholder.svg"} />
+              <Box sx={{ flex: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography fontWeight="medium">{otherParticipant.username}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {chat.lastMessageTime}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" noWrap>
+                  {chat.lastMessage}
                 </Typography>
               </Box>
-              <Typography variant="body2" color="text.secondary" noWrap>
-                {chat.lastMessage}
-              </Typography>
             </Box>
-          </Box>
-        ))}
+          );
+        })}
       </Box>
     </Box>
   );

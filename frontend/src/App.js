@@ -51,7 +51,7 @@ function App() {
         <Route path="/verify-email" element={<EmailVerification />} />
         <Route path="/profile" element={user?.username ? <UserProfile /> : <HomePage />} />
         <Route path="/messages" element={user ? <MessagePage /> : <HomePage />} />
-        <Route path="/messages/:userId" element={user ? <MessagePage /> : <HomePage />} />
+        <Route path="/messages/:chatId/:user2Id" element={user ? <MessagePage /> : <HomePage />} />
         <Route path="/hotels/:id" element={<HotelDetails />} />
         <Route path="/list-properties" element={<PropertyListingPage />} />
         <Route path="/list-properties/:id" element={<PropertyListingPage />} />

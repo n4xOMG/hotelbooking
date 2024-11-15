@@ -1,23 +1,17 @@
-import { Add, Call, MoreVert, Send, VideoCall } from "@mui/icons-material";
+import { Add, Send } from "@mui/icons-material";
 import { Avatar, Box, Button, IconButton, InputBase, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { useChat } from "../../utils/ChatContext";
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
+import { useChat } from "../../utils/ChatContext";
 
-const MainChatArea = ({ user2Id, chatId }) => {
-  const { joinChat, sendMessage, messages } = useChat();
+const MainChatArea = ({ chatId }) => {
+  const { sendMessage, messages } = useChat();
   const [newMessage, setNewMessage] = useState("");
-  const { user } = useSelector((store) => store.auth);
-
-  useEffect(() => {
-    if (user?.id && user2Id) {
-      joinChat(user.id, user2Id);
-    }
-  }, [user?.id, user2Id, joinChat]);
+  const { user } = useSelector((store) => store.user);
 
   const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      sendMessage(chatId, user?.id, newMessage);
+    if (newMessage.trim() && chatId && user?._id) {
+      sendMessage(chatId, user._id, newMessage);
       setNewMessage("");
     }
   };
@@ -26,23 +20,20 @@ const MainChatArea = ({ user2Id, chatId }) => {
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
       <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider", display: "flex", justifyContent: "space-between" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Avatar alt="United Family" src="/placeholder.svg" />
+          <Avatar alt="Chat Avatar" src="/placeholder.svg" />
           <Box>
-            <Typography fontWeight="bold">United Family</Typography>
+            <Typography fontWeight="bold">Chat Room</Typography>
             <Typography variant="body2" color="green">
-              Rashford is typing...
+              User is typing...
             </Typography>
           </Box>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
           <IconButton>
-            <VideoCall />
+            <Add />
           </IconButton>
           <IconButton>
-            <Call />
-          </IconButton>
-          <IconButton>
-            <MoreVert />
+            <Send />
           </IconButton>
         </Box>
       </Box>
@@ -50,9 +41,9 @@ const MainChatArea = ({ user2Id, chatId }) => {
         {/* Messages */}
         {messages.map((msg, index) => (
           <Box key={index} sx={{ display: "flex", gap: 2, mb: 3 }}>
-            <Avatar alt={msg.sender.firstname} src="/placeholder.svg" />
+            <Avatar alt={msg.sender?.firstname || "Unknown"} src={msg.sender?.avatarUrl || "/placeholder.svg"} />
             <Box>
-              <Typography fontWeight="bold">{msg.sender.firstname}</Typography>
+              <Typography fontWeight="bold">{msg.sender?.username || "Unknown"}</Typography>
               <Typography variant="body2">{msg.message}</Typography>
             </Box>
           </Box>
@@ -62,7 +53,18 @@ const MainChatArea = ({ user2Id, chatId }) => {
         <IconButton>
           <Add />
         </IconButton>
-        <InputBase placeholder="Write a message..." sx={{ flex: 1 }} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
+        <InputBase
+          placeholder="Write a message..."
+          sx={{ flex: 1 }}
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === "Enter") {
+              handleSendMessage();
+              e.preventDefault();
+            }
+          }}
+        />
         <Button variant="contained" onClick={handleSendMessage}>
           <Send />
         </Button>
