@@ -23,10 +23,10 @@ import {
   Paper,
 } from "@mui/material";
 import { Delete, Edit, Search } from "@mui/icons-material";
-import { fetchCategories, createCategory, updateCategory, deleteCategory } from "../../../redux/category/category.action";
-import LoadingSpinner from "../../LoadingSpinner";
+import { fetchCategories, createCategory, updateCategory, deleteCategory } from "../../redux/category/category.action";
+import LoadingSpinner from "../LoadingSpinner";
 import { FixedSizeList as List } from "react-window";
-import { IconMenuItem } from "../../IconMenuItem";
+import { IconMenuItem } from "../IconMenuItem";
 import './CategoriesTab.css';
 
 export default function CategoriesTab() {

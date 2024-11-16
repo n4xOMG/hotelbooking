@@ -23,8 +23,8 @@ import {
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FixedSizeList as List } from "react-window";
-import { createAmenity, deleteAmenity, fetchAmenities, updateAmenity } from "../../../redux/amenity/amenity.action";
-import { IconMenuItem } from "../../IconMenuItem";
+import { createAmenity, deleteAmenity, fetchAmenities, updateAmenity } from "../../redux/amenity/amenity.action";
+import { IconMenuItem } from "../IconMenuItem";
 
 export default function AmenitiesTab() {
   const dispatch = useDispatch();

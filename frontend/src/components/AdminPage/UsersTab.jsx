@@ -23,8 +23,8 @@ import {
   InputLabel,
 } from "@mui/material";
 import { Edit, Search } from "@mui/icons-material";
-import { fetchUsers, updateUser } from "../../../redux/user/user.action";
-import LoadingSpinner from "../../LoadingSpinner";
+import { fetchUsers, updateUser } from "../../redux/user/user.action";
+import LoadingSpinner from "../LoadingSpinner";
 import './UsersTab.css';
 
 export default function UsersTab() {

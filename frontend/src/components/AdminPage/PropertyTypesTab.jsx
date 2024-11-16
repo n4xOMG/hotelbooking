@@ -24,10 +24,10 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { Delete, Edit, MoreHoriz, Search } from "@mui/icons-material";
-import { fetchPropertyTypes, createPropertyType, updatePropertyType, deletePropertyType } from "../../../redux/propertyType/propertyType.action";
-import LoadingSpinner from "../../LoadingSpinner";
+import { fetchPropertyTypes, createPropertyType, updatePropertyType, deletePropertyType } from "../../redux/propertyType/propertyType.action";
+import LoadingSpinner from "../LoadingSpinner";
 import { FixedSizeList as List } from "react-window";
-import { IconMenuItem } from "../../IconMenuItem";
+import { IconMenuItem } from "../IconMenuItem";
 
 export default function PropertyTypesTab() {
   const dispatch = useDispatch();
