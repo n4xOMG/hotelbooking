@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
+  IconButton,
   Button,
   Table,
   TableBody,
@@ -21,15 +22,17 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
-import { Edit, Search } from "@mui/icons-material";
-import { fetchReports, updateReportStatus } from "../../redux/report/report.action";
+import { Edit, Search, Reply } from "@mui/icons-material";
+import { fetchReports, updateReportStatus, createReport } from "../../redux/report/report.action";
 import LoadingSpinner from "../LoadingSpinner";
 
 export default function ReportsTab() {
   const dispatch = useDispatch();
   const { reports, loading } = useSelector((state) => state.report);
   const [openDialog, setOpenDialog] = useState(false);
-  const [reportData, setReportData] = useState({ reportedBy: "", type: "", reason: "", status: "" });
+  const [isEditing, setIsEditing] = useState(false);
+  const [isReplying, setIsReplying] = useState(false);
+  const [reportData, setReportData] = useState({ reportedBy: "", type: "", reason: "", status: "", reply: "" });
   const [searchQuery, setSearchQuery] = useState(""); // state for report search
   const [statusFilter, setStatusFilter] = useState(""); // state for status filter
 
@@ -38,21 +41,30 @@ export default function ReportsTab() {
   }, [dispatch]);
 
   // Filter the reports based on search query and selected status
-  const filteredReports = Array.isArray(reports) ? reports.filter((report) =>
-    (report.reportedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    report.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    report.reason.toLowerCase().includes(searchQuery.toLowerCase())) &&
-    (statusFilter === "" || report.status === statusFilter)
-  ) : [];
+  const filteredReports = useMemo(() => {
+    return Array.isArray(reports)
+      ? reports.filter(
+          (report) =>
+            ((report.reportedBy && report.reportedBy.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (report.type && report.type.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (report.reason && report.reason.toLowerCase().includes(searchQuery.toLowerCase()))) &&
+            (statusFilter === "" || report.status === statusFilter)
+        )
+      : [];
+  }, [reports, searchQuery, statusFilter]);
 
-  const handleDialogOpen = (report = { reportedBy: "", type: "", reason: "", status: "" }) => {
+  const handleDialogOpen = (report = { reportedBy: "", type: "", reason: "", status: "", reply: "" }, editing = false, replying = false) => {
     setReportData(report);
+    setIsEditing(editing);
+    setIsReplying(replying);
     setOpenDialog(true);
   };
 
   const handleDialogClose = () => {
     setOpenDialog(false);
-    setReportData({ reportedBy: "", type: "", reason: "", status: "" });
+    setReportData({ reportedBy: "", type: "", reason: "", status: "", reply: "" });
+    setIsEditing(false);
+    setIsReplying(false);
   };
 
   const handleInputChange = (event) => {
@@ -61,9 +73,16 @@ export default function ReportsTab() {
   };
 
   const handleSaveReport = () => {
-    if (reportData._id) {
+    if (isEditing) {
       // Updating existing report
       dispatch(updateReportStatus(reportData._id, reportData.status));
+    } else if (isReplying) {
+      // Replying to a report
+      // Assuming you have an action to handle replying to a report
+      dispatch(updateReportStatus(reportData._id, reportData.reply));
+    } else {
+      // Creating a new report
+      dispatch(createReport(reportData));
     }
     handleDialogClose();
   };
@@ -102,6 +121,9 @@ export default function ReportsTab() {
                 <MenuItem value="Resolved">Resolved</MenuItem>
               </Select>
             </FormControl>
+            <Button variant="contained" color="primary" onClick={() => handleDialogOpen()}>
+              Add Report
+            </Button>
           </Box>
 
           <TableContainer component={Paper}>
@@ -121,18 +143,14 @@ export default function ReportsTab() {
                     <TableCell>{report.reportedBy}</TableCell>
                     <TableCell>{report.type}</TableCell>
                     <TableCell>{report.reason}</TableCell>
+                    <TableCell>{report.status}</TableCell>
                     <TableCell>
-                      <Select
-                        value={report.status}
-                        onChange={(e) => dispatch(updateReportStatus(report._id, e.target.value))}
-                        sx={{ minWidth: 120 }}
-                      >
-                        <MenuItem value="Pending">Pending</MenuItem>
-                        <MenuItem value="Resolved">Resolved</MenuItem>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="text" onClick={() => handleDialogOpen(report)}>View Details</Button>
+                      <IconButton onClick={() => handleDialogOpen(report, true, false)}>
+                        <Edit fontSize="small" />
+                      </IconButton>
+                      <IconButton onClick={() => handleDialogOpen(report, false, true)}>
+                        <Reply fontSize="small" />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -141,7 +159,7 @@ export default function ReportsTab() {
           </TableContainer>
 
           <Dialog open={openDialog} onClose={handleDialogClose}>
-            <DialogTitle>{reportData._id ? "Edit Report" : "Add Report"}</DialogTitle>
+            <DialogTitle>{isEditing ? "Edit Report" : isReplying ? "Reply to Report" : "Add Report"}</DialogTitle>
             <DialogContent>
               <TextField
                 autoFocus
@@ -153,7 +171,7 @@ export default function ReportsTab() {
                 required
                 value={reportData.reportedBy}
                 onChange={handleInputChange}
-                disabled
+                disabled={isEditing || isReplying}
               />
               <TextField
                 margin="dense"
@@ -164,7 +182,7 @@ export default function ReportsTab() {
                 required
                 value={reportData.type}
                 onChange={handleInputChange}
-                disabled
+                disabled={isEditing || isReplying}
               />
               <TextField
                 margin="dense"
@@ -175,18 +193,32 @@ export default function ReportsTab() {
                 required
                 value={reportData.reason}
                 onChange={handleInputChange}
-                disabled
+                disabled={isEditing || isReplying}
               />
-              <TextField
-                margin="dense"
-                name="status"
-                label="Status"
-                type="text"
-                fullWidth
-                required
-                value={reportData.status}
-                onChange={handleInputChange}
-              />
+              {isReplying ? (
+                <TextField
+                  margin="dense"
+                  name="reply"
+                  label="Reply"
+                  type="text"
+                  fullWidth
+                  required
+                  value={reportData.reply}
+                  onChange={handleInputChange}
+                />
+              ) : (
+                <TextField
+                  margin="dense"
+                  name="status"
+                  label="Status"
+                  type="text"
+                  fullWidth
+                  required
+                  value={reportData.status}
+                  onChange={handleInputChange}
+                  disabled
+                />
+              )}
             </DialogContent>
             <DialogActions>
               <Button onClick={handleDialogClose} color="primary">
