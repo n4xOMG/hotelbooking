@@ -14,6 +14,9 @@ import {
   UPDATE_HOTEL_FAILURE,
   UPDATE_HOTEL_REQUEST,
   UPDATE_HOTEL_SUCCESS,
+  CHECK_AVAILABILITY_REQUEST,
+  CHECK_AVAILABILITY_SUCCESS,
+  CHECK_AVAILABILITY_FAILURE,
 } from "./hotel.actionType";
 
 const initialState = {
@@ -22,6 +25,11 @@ const initialState = {
   hotel: null,
   loading: false,
   error: null,
+  availability: {
+    loading: false,
+    isAvailable: null,
+    error: null,
+  },
 };
 
 const hotelReducer = (state = initialState, action) => {
@@ -81,6 +89,21 @@ const hotelReducer = (state = initialState, action) => {
         ...state,
         loading: false,
         error: action.payload,
+      };
+    case CHECK_AVAILABILITY_REQUEST:
+      return {
+        ...state,
+        availability: { loading: true, isAvailable: null, error: null },
+      };
+    case CHECK_AVAILABILITY_SUCCESS:
+      return {
+        ...state,
+        availability: { loading: false, isAvailable: action.payload.isAvailable, error: null },
+      };
+    case CHECK_AVAILABILITY_FAILURE:
+      return {
+        ...state,
+        availability: { loading: false, isAvailable: null, error: action.payload },
       };
     default:
       return state;

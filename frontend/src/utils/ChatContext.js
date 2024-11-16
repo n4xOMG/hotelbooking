@@ -62,13 +62,13 @@ export const ChatProvider = ({ children }) => {
   );
 
   const sendMessage = useCallback(
-    (chatId, senderId, message) => {
-      console.log("Sending message:", { chatId, senderId, message });
+    (chatId, senderId, message, images = []) => {
+      console.log("Sending message:", { chatId, senderId, message, images });
       if (!socket || !socket.connected) {
         console.error("Socket not connected");
         return;
       }
-      socket.emit("sendMessage", { chatId, senderId, message });
+      socket.emit("sendMessage", { chatId, senderId, message, images });
     },
     [socket]
   );

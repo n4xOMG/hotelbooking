@@ -2,14 +2,14 @@ const { Server } = require("socket.io");
 const Chat = require("../models/Chat");
 const User = require("../models/User");
 
-// Updated getOrCreateChat with population
+// Utility function to find or create a chat
 const getOrCreateChat = async (user1Id, user2Id) => {
   try {
     let chat = await Chat.findOne({
       participants: { $all: [user1Id, user2Id] },
     })
       .populate("participants", "firstname lastname username avatarUrl")
-      .populate("messages.sender", "firstname lastname username avatarUrl"); // Populate sender
+      .populate("messages.sender", "firstname lastname username avatarUrl");
 
     if (!chat) {
       chat = new Chat({ participants: [user1Id, user2Id], messages: [] });
@@ -63,7 +63,7 @@ function initWebSocket(server) {
 
     // Handle sending a message
     socket.on("sendMessage", async (data) => {
-      const { chatId, senderId, message } = data;
+      const { chatId, senderId, message, images } = data; // Include images
 
       // Validate senderId
       const sender = await User.findById(senderId);
@@ -87,15 +87,17 @@ function initWebSocket(server) {
       const newMessage = {
         sender: senderId,
         message,
+        images, // Include images
         timestamp: new Date(),
       };
 
       try {
         const updatedChat = await Chat.findByIdAndUpdate(chatId, { $push: { messages: newMessage } }, { new: true })
           .populate("participants", "firstname lastname username avatarUrl")
-          .populate("messages.sender", "firstname lastname username avatarUrl"); // Populate sender
+          .populate("messages.sender", "firstname lastname username avatarUrl");
 
         io.to(chatId).emit("receiveMessage", updatedChat);
+        console.log(`Message sent in chat ${chatId} by user ${senderId}`);
       } catch (error) {
         console.error("Error sending message:", error);
       }

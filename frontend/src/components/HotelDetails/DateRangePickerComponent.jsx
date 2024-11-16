@@ -12,32 +12,33 @@ export default function DateRangePickerComponent({ dateRange, setDateRange, hote
     if (!startDate || !endDate) return;
 
     try {
-      const { isAvailable } = await dispatch(checkAvailability(hotelId, formatDate(startDate), formatDate(endDate)));
-
-      if (!isAvailable) {
-        setError("Hotel is not available for selected dates");
-        return false;
-      }
-
-      setError(null);
-      return true;
+      const payload = await dispatch(checkAvailability(hotelId, formatDate(startDate), formatDate(endDate)));
+      const isAvailable = payload?.isAvailable;
+      setError(isAvailable ? null : "Hotel is not available for selected dates");
     } catch (err) {
       setError("Error checking availability");
-      return false;
     }
   };
 
   const handleStartDateChange = async (event) => {
     const newStartDate = new Date(event.target.value);
-    if (await handleDateChange(newStartDate, dateRange[1])) {
-      setDateRange([newStartDate, dateRange[1]]);
+    setDateRange([newStartDate, dateRange[1]]);
+    if (dateRange[1]) {
+      await handleDateChange(newStartDate, dateRange[1]);
+    } else {
+      // Clear error if only start date is selected
+      setError(null);
     }
   };
 
   const handleEndDateChange = async (event) => {
     const newEndDate = new Date(event.target.value);
-    if (await handleDateChange(dateRange[0], newEndDate)) {
-      setDateRange([dateRange[0], newEndDate]);
+    setDateRange([dateRange[0], newEndDate]);
+    if (dateRange[0]) {
+      await handleDateChange(dateRange[0], newEndDate);
+    } else {
+      // Clear error if only end date is selected
+      setError(null);
     }
   };
 

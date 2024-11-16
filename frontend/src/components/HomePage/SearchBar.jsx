@@ -1,32 +1,72 @@
-import { Search } from "@mui/icons-material";
-import AddIcon from "@mui/icons-material/Add";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import PinDropIcon from "@mui/icons-material/PinDrop";
-import RemoveIcon from "@mui/icons-material/Remove";
-import { Box, Button, IconButton, Menu, MenuItem, TextField, Typography } from "@mui/material";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Box, Button, IconButton, Menu, MenuItem, TextField, Typography, Autocomplete } from "@mui/material";
+import {
+  Search,
+  Add as AddIcon,
+  Remove as RemoveIcon,
+  CalendarMonth as CalendarMonthIcon,
+  PinDrop as PinDropIcon,
+} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import { fetchLocationSuggestions } from "../../utils/fetchLocationSuggestions";
+
 export default function SearchBar() {
   const [where, setWhere] = useState("");
-  const [checkIn, setCheckIn] = useState(null);
-  const [checkOut, setCheckOut] = useState(null);
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
   const [anchorElGuests, setAnchorElGuests] = useState(null);
-  const [anchorElWhere, setAnchorElWhere] = useState(null);
   const [anchorElCheckIn, setAnchorElCheckIn] = useState(null);
   const [anchorElCheckOut, setAnchorElCheckOut] = useState(null);
 
+  const [locationOptions, setLocationOptions] = useState([]);
+
+  const navigate = useNavigate();
+
   const handleGuestsOpen = (event) => setAnchorElGuests(event.currentTarget);
   const handleGuestsClose = () => setAnchorElGuests(null);
-
-  const handleWhereOpen = (event) => setAnchorElWhere(event.currentTarget);
-  const handleWhereClose = () => setAnchorElWhere(null);
 
   const handleCheckInOpen = (event) => setAnchorElCheckIn(event.currentTarget);
   const handleCheckInClose = () => setAnchorElCheckIn(null);
 
   const handleCheckOutOpen = (event) => setAnchorElCheckOut(event.currentTarget);
   const handleCheckOutClose = () => setAnchorElCheckOut(null);
+
+  const handleSearch = () => {
+    if (checkIn && checkOut && new Date(checkIn) >= new Date(checkOut)) {
+      alert("Check-out date must be after check-in date.");
+      return;
+    }
+
+    // Construct query parameters
+    const queryParams = new URLSearchParams({
+      location: where,
+      checkIn,
+      checkOut,
+      maxGuests: guests,
+    }).toString();
+
+    // Navigate to SearchResults page with query parameters
+    navigate(`/search-results?${queryParams}`);
+  };
+
+  // Fetch location suggestions with debounce
+  useEffect(() => {
+    const getSuggestions = async () => {
+      if (where.length < 3) {
+        setLocationOptions([]);
+        return;
+      }
+      const suggestions = await fetchLocationSuggestions(where);
+      setLocationOptions(suggestions);
+    };
+
+    const delayDebounceFn = setTimeout(() => {
+      getSuggestions();
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [where]);
 
   return (
     <Box
@@ -42,7 +82,7 @@ export default function SearchBar() {
         overflow: "hidden",
       }}
     >
-      {/* Location Input */}
+      {/* Location Input with Autocomplete */}
       <Button
         sx={{
           flex: 1,
@@ -58,34 +98,25 @@ export default function SearchBar() {
           <PinDropIcon sx={{ mr: 1 }} />
           <Box sx={{ flex: 1 }}>
             <Typography variant="caption">Where</Typography>
-            <TextField
-              value={where}
-              onChange={(e) => setWhere(e.target.value)}
-              placeholder="Search destinations"
-              variant="standard"
-              sx={{ height: "auto", border: 0, p: 0, fontSize: 14 }}
+            <Autocomplete
+              freeSolo
+              options={locationOptions.map((option) => option.description)}
+              inputValue={where}
+              onInputChange={(event, newInputValue) => {
+                setWhere(newInputValue);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Search destinations"
+                  variant="standard"
+                  sx={{ height: "auto", border: 0, p: 0, fontSize: 14 }}
+                />
+              )}
             />
           </Box>
-          <IconButton size="small" onClick={handleWhereOpen} sx={{ ml: 1 }}>
-            <ExpandMoreIcon />
-          </IconButton>
         </Box>
       </Button>
-
-      <Menu anchorEl={anchorElWhere} open={Boolean(anchorElWhere)} onClose={handleWhereClose} sx={{ mt: 1, width: 260 }}>
-        {["London", "Paris", "New York", "Tokyo"].map((city) => (
-          <MenuItem
-            key={city}
-            onClick={() => {
-              setWhere(city);
-              handleWhereClose();
-            }}
-          >
-            <PinDropIcon fontSize="small" sx={{ mr: 1 }} />
-            {city}
-          </MenuItem>
-        ))}
-      </Menu>
 
       {/* Check-in */}
       <Button
@@ -169,7 +200,7 @@ export default function SearchBar() {
       </Menu>
 
       {/* Search Button */}
-      <Button variant="contained" color="primary" sx={{ borderRadius: "50px", ml: 1, px: 3 }}>
+      <Button variant="contained" color="primary" sx={{ borderRadius: "50px", ml: 1, px: 3 }} onClick={handleSearch}>
         <Search fontSize="small" sx={{ mr: 1 }} />
         Search
       </Button>

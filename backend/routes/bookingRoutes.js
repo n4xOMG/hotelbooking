@@ -2,6 +2,7 @@ const express = require("express");
 const { verifyToken } = require("../config/jwtConfig");
 const Booking = require("../models/Booking");
 const Hotel = require("../models/Hotel");
+const { isHotelAvailable } = require("../utils/checkAvailability"); // Import the utility function
 
 const router = express.Router();
 
@@ -13,7 +14,13 @@ router.post("/", verifyToken, async (req, res) => {
   try {
     const hotel = await Hotel.findById(hotelId);
     if (!hotel) {
-      return res.status(404).json({ message: "Hotel not found" });
+      return res.status(404).json({ message: "Hotel not found." });
+    }
+
+    // Check availability before booking
+    const available = await isHotelAvailable(hotelId, new Date(checkInDate), new Date(checkOutDate));
+    if (!available) {
+      return res.status(400).json({ message: "No available rooms for the selected dates." });
     }
 
     const newBooking = new Booking({
@@ -128,6 +135,8 @@ router.delete("/:id", verifyToken, async (req, res) => {
     res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
+
+// Check Availability Endpoint
 router.get("/check-availability/:hotelId", async (req, res) => {
   const { hotelId } = req.params;
   const { startDate, endDate } = req.query;
@@ -137,21 +146,21 @@ router.get("/check-availability/:hotelId", async (req, res) => {
     const parsedStartDate = new Date(startDate);
     const parsedEndDate = new Date(endDate);
 
-    // Find any bookings that overlap with the requested date range
-    const overlappingBookings = await Booking.find({
-      hotel: hotelId,
-      $or: [
-        {
-          checkInDate: { $lte: parsedEndDate },
-          checkOutDate: { $gte: parsedStartDate },
-        },
-      ],
-    });
+    if (isNaN(parsedStartDate) || isNaN(parsedEndDate)) {
+      return res.status(400).json({ error: "Invalid date format." });
+    }
 
-    const isAvailable = overlappingBookings.length === 0;
-    res.json({ isAvailable, overlappingBookings });
+    if (parsedStartDate >= parsedEndDate) {
+      return res.status(400).json({ error: "End date must be after start date." });
+    }
+
+    // Check availability using the utility function
+    const available = await isHotelAvailable(hotelId, parsedStartDate, parsedEndDate);
+
+    res.json({ isAvailable: available });
   } catch (error) {
     res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });
+
 module.exports = router;
