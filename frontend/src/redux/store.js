@@ -7,6 +7,7 @@ import categoryReducer from "./category/category.reducer";
 import propertyTypeReducer from "./propertyType/propertyType.reducer";
 import amenityReducer from "./amenity/amenity.reducer";
 import hotelReducer from "./hotel/hotel.reducer";
+import reportReducer from "./report/report.reducer";
 
 const rootReducers = combineReducers({
   auth: authReducer,
@@ -16,5 +17,6 @@ const rootReducers = combineReducers({
   category: categoryReducer,
   propertyType: propertyTypeReducer,
   amenity: amenityReducer,
+  report: reportReducer,
 });
 export const store = legacy_createStore(rootReducers, applyMiddleware(thunk));
