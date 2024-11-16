@@ -7,20 +7,35 @@ const router = express.Router();
 
 // Create a new rating
 router.post("/", verifyToken, async (req, res) => {
-  const { value, comment, images } = req.body;
+  const { value, comment, images, hotel } = req.body;
   const userId = req.user.id;
 
   try {
+    // Check if the user has already rated this hotel
+    const existingRating = await Rating.findOne({ user: userId, hotel });
+    if (existingRating) {
+      return res.status(400).json({ message: "You have already rated this hotel." });
+    }
+
     const newRating = new Rating({
       user: userId,
+      hotel,
       value,
       comment,
       images,
     });
 
     await newRating.save();
+
+    // Add rating to hotel's ratings array
+    await Hotel.findByIdAndUpdate(hotel, { $push: { ratings: newRating._id } });
+
     res.status(201).json(newRating);
   } catch (error) {
+    // Handle duplicate key error gracefully
+    if (error.code === 11000) {
+      return res.status(400).json({ message: "You have already rated this hotel." });
+    }
     res.status(500).json({ message: "Failed to create rating", error: error.message });
   }
 });
@@ -70,7 +85,7 @@ router.get("/hotel/:hotelId", async (req, res) => {
       return res.status(404).json({ message: "Hotel not found" });
     }
 
-    const ratings = await Rating.find({ _id: { $in: hotel.ratings } }).populate("user", "firstname lastname email");
+    const ratings = await Rating.find({ _id: { $in: hotel.ratings } }).populate("user", "avatarUrl firstname lastname email");
     res.status(200).json(ratings);
   } catch (error) {
     res.status(500).json({ message: `Server error: ${error.message}` });

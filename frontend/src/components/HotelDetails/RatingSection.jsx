@@ -1,27 +1,44 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Grid, Card, CardContent, CardMedia, Avatar } from "@mui/material";
+import { Box, Typography, Grid, Avatar, Card, CardHeader, CardContent, CardMedia, Rating, Divider } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchRatingsByHotel } from "../../redux/rating/rating.action";
+import LoadingSpinner from "../LoadingSpinner";
+import { formatDate } from "../../utils/formatDate";
+import ViewImageModal from "./ViewImageModal";
 
 const RatingSection = ({ hotelId }) => {
   const dispatch = useDispatch();
-  const { ratings } = useSelector((state) => state.rating);
-  const [loading, setLoading] = useState(false);
+  const { ratingsByHotel, loading } = useSelector((state) => state.rating);
+  const [openModal, setOpenModal] = useState(false);
+  const [currentImages, setCurrentImages] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchRatings = async () => {
-      setLoading(true);
-      try {
-        await dispatch(fetchRatingsByHotel(hotelId));
-      } catch (error) {
-        console.error("Error fetching ratings:", error);
-      } finally {
-        setLoading(false);
-      }
+      await dispatch(fetchRatingsByHotel(hotelId));
     };
-
     fetchRatings();
   }, [dispatch, hotelId]);
+
+  const handleOpenModal = (images, index) => {
+    setCurrentImages(images);
+    setCurrentImageIndex(index);
+    setOpenModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setCurrentImages([]);
+    setCurrentImageIndex(0);
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % currentImages.length);
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prevIndex) => (prevIndex - 1 + currentImages.length) % currentImages.length);
+  };
 
   return (
     <Box sx={{ mt: 4 }}>
@@ -29,33 +46,54 @@ const RatingSection = ({ hotelId }) => {
         Ratings & Reviews
       </Typography>
       {loading ? (
-        <Typography>Loading...</Typography>
+        <LoadingSpinner />
+      ) : ratingsByHotel.length === 0 ? (
+        <Typography>No ratings yet. Be the first to rate!</Typography>
       ) : (
-        ratings.map((rating) => (
-          <Card key={rating._id} sx={{ mb: 2 }}>
-            <CardContent>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                <Avatar sx={{ mr: 2 }}>{rating.user.firstname[0]}</Avatar>
-                <Typography variant="subtitle1" fontWeight="bold">
-                  {rating.user.firstname} {rating.user.lastname}
-                </Typography>
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                {rating.comment}
-              </Typography>
-              {rating.images && rating.images.length > 0 && (
-                <Grid container spacing={2}>
-                  {rating.images.map((image, index) => (
-                    <Grid item xs={6} sm={4} md={3} key={index}>
-                      <CardMedia component="img" src={image} alt={`Rating image ${index + 1}`} />
+        <Grid container spacing={2}>
+          {ratingsByHotel.map((rating) => (
+            <Grid item xs={12} key={rating._id}>
+              <Card elevation={3}>
+                <CardHeader
+                  avatar={<Avatar src={rating.user.avatarUrl}>{rating.user.firstname.charAt(0)}</Avatar>}
+                  title={`${rating.user.firstname} ${rating.user.lastname}`}
+                  subheader={formatDate(rating.createdAt)}
+                  action={<Rating name="read-only" value={rating.value} readOnly precision={0.5} />}
+                />
+                <Divider />
+                <CardContent>
+                  <Typography variant="body1" sx={{ mb: 1 }}>
+                    {rating.comment}
+                  </Typography>
+                  {rating.images && rating.images.length > 0 && (
+                    <Grid container spacing={1}>
+                      {rating.images.map((img, index) => (
+                        <Grid item xs={6} sm={4} md={3} key={index}>
+                          <CardMedia
+                            component="img"
+                            height="100"
+                            image={img}
+                            alt={`Rating Image ${index + 1}`}
+                            sx={{ borderRadius: 1, cursor: "pointer" }}
+                            onClick={() => handleOpenModal(rating.images, index)}
+                          />
+                        </Grid>
+                      ))}
                     </Grid>
-                  ))}
-                </Grid>
-              )}
-            </CardContent>
-          </Card>
-        ))
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       )}
+      <ViewImageModal
+        open={openModal}
+        onClose={handleCloseModal}
+        image={currentImages[currentImageIndex]}
+        onNext={handleNextImage}
+        onPrev={handlePrevImage}
+      />
     </Box>
   );
 };

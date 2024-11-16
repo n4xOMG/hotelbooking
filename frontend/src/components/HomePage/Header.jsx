@@ -97,9 +97,6 @@ export default function Header() {
                 <MenuItem key="messages" onClick={() => navigate("/messages")}>
                   Your Messages
                 </MenuItem>,
-                <MenuItem key="bookings" onClick={handleMenuClose}>
-                  Bookings
-                </MenuItem>,
                 <MenuItem key="list-properties" onClick={() => navigate("/list-properties")}>
                   List your properties
                 </MenuItem>,

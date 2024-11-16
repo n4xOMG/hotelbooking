@@ -31,7 +31,8 @@ export const createRating = (ratingData) => async (dispatch) => {
     const { data } = await api.post(`${API_BASE_URL}/ratings`, ratingData);
     dispatch({ type: CREATE_RATING_SUCCESS, payload: data });
   } catch (error) {
-    dispatch({ type: CREATE_RATING_FAILURE, payload: error.message });
+    const errorMessage = error.response && error.response.data.message ? error.response.data.message : error.message;
+    dispatch({ type: CREATE_RATING_FAILURE, payload: errorMessage });
   }
 };
 

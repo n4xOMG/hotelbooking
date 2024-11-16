@@ -25,6 +25,7 @@ import {
 const initialState = {
   ratings: [],
   ratingsByHotel: [],
+  ratingsByUser: [],
   rating: null,
   loading: false,
   error: null,
@@ -51,6 +52,11 @@ const ratingReducer = (state = initialState, action) => {
         ratings: [...state.ratings, action.payload],
       };
     case GET_USER_RATINGS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        ratingsByUser: action.payload,
+      };
     case GET_ALL_RATINGS_SUCCESS:
       return {
         ...state,

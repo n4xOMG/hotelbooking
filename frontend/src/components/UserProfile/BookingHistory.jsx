@@ -1,29 +1,49 @@
+import { Avatar, Box, Button, Card, CardContent, CardHeader, List, ListItem, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { Box, Card, CardContent, CardHeader, List, ListItem, Typography, Avatar } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserBookings } from "../../redux/booking/booking.action";
-import LoadingSpinner from "../LoadingSpinner";
+import { getUserRatings } from "../../redux/rating/rating.action";
 import { formatDate } from "../../utils/formatDate";
+import LoadingSpinner from "../LoadingSpinner";
+import RatingDialog from "./RatingDialog";
 
 const BookingHistory = () => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const { bookingsByUser } = useSelector((state) => state.booking);
+  const { ratingsByUser } = useSelector((state) => state.rating);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedHotelId, setSelectedHotelId] = useState(null);
 
   useEffect(() => {
-    const fetchBookings = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
         await dispatch(fetchUserBookings());
+        await dispatch(getUserRatings());
       } catch (error) {
-        console.log("Error fetching bookings: ", error);
+        console.log("Error fetching data: ", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBookings();
+    fetchData();
   }, [dispatch]);
+
+  const handleOpenDialog = (hotelId) => {
+    setSelectedHotelId(hotelId);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedHotelId(null);
+  };
+
+  const hasUserRated = (hotelId) => {
+    return ratingsByUser.some((rating) => rating.hotel.toString() === hotelId.toString());
+  };
 
   return (
     <>
@@ -64,6 +84,17 @@ const BookingHistory = () => {
                     <Typography fontWeight="medium" color={booking.status === "confirmed" ? "success.main" : "error.main"}>
                       {booking.status}
                     </Typography>
+                    {booking.status === "confirmed" && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{ mt: 1 }}
+                        onClick={() => handleOpenDialog(booking.hotel._id)}
+                        disabled={hasUserRated(booking.hotel._id)}
+                      >
+                        {hasUserRated(booking.hotel._id) ? "Rated" : "Rate"}
+                      </Button>
+                    )}
                   </Box>
                 </ListItem>
               ))}
@@ -71,6 +102,7 @@ const BookingHistory = () => {
           </CardContent>
         </Card>
       )}
+      {selectedHotelId && <RatingDialog open={openDialog} handleClose={handleCloseDialog} hotelId={selectedHotelId} />}
     </>
   );
 };
