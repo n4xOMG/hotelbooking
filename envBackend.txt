@@ -1,7 +1,0 @@
-MONGO_URI=mongodb://localhost:27017/hotelBooking
-JWT_SECRET=notnixomfafodaidfd5af4a4fd6a8fd6a6d541daf6gf8ga5fd46er789e4
-PORT=5000
-EMAIL_USER=testnixomg123@gmail.com
-EMAIL_PASS=ltexccimxocdqeiv
-CLIENT_URL=http://localhost:3000
-STRIPE_SECRET_KEY=sk_test_51QHzwJLtYjGKxtBre6ZrK4KcGQGrrkgkeg9JZFL5E0PSR5OZHScscFkHKwmPulXks7J9C5zaL0LRruWpNnNbRIfJ00pQzg5Z1L
