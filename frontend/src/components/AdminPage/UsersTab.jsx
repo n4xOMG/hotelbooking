@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
@@ -25,27 +25,40 @@ import {
 import { Edit, Search } from "@mui/icons-material";
 import { fetchUsers, updateUser } from "../../redux/user/user.action";
 import LoadingSpinner from "../LoadingSpinner";
-import './UsersTab.css';
 
 export default function UsersTab() {
   const dispatch = useDispatch();
   const { users, loading } = useSelector((state) => state.user);
   const [openDialog, setOpenDialog] = useState(false);
-  const [userData, setUserData] = useState({ firstname: "", lastname: "", username: "", phoneNumber: "", email: "", role: "", gender: "", birthdate: "" });
-  const [searchQuery, setSearchQuery] = useState(""); // state for user search
-  const [roleFilter, setRoleFilter] = useState(""); // state for role filter
+  const [userData, setUserData] = useState({
+    firstname: "",
+    lastname: "",
+    username: "",
+    phoneNumber: "",
+    email: "",
+    role: "",
+    gender: "",
+    birthdate: "",
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
 
   useEffect(() => {
     dispatch(fetchUsers());
   }, [dispatch]);
 
-  const filteredUsers = Array.isArray(users) ? users.filter((user) =>
-    (user.firstname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.lastname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
-    (roleFilter === "" || user.role === roleFilter)
-  ) : [];
+  const filteredUsers = useMemo(() => {
+    return Array.isArray(users)
+      ? users.filter(
+          (user) =>
+            (user.firstname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              user.lastname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              user.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
+            (roleFilter === "" || user.role === roleFilter)
+        )
+      : [];
+  }, [users, searchQuery, roleFilter]);
 
   const handleDialogOpen = (user = { firstname: "", lastname: "", username: "", phoneNumber: "", email: "", role: "", gender: "", birthdate: "" }) => {
     setUserData(user);
@@ -54,7 +67,16 @@ export default function UsersTab() {
 
   const handleDialogClose = () => {
     setOpenDialog(false);
-    setUserData({ firstname: "", lastname: "", username: "", phoneNumber: "", email: "", role: "", gender: "", birthdate: "" });
+    setUserData({
+      firstname: "",
+      lastname: "",
+      username: "",
+      phoneNumber: "",
+      email: "",
+      role: "",
+      gender: "",
+      birthdate: "",
+    });
   };
 
   const handleInputChange = (event) => {
@@ -63,6 +85,10 @@ export default function UsersTab() {
   };
 
   const handleSaveUser = () => {
+    if (!userData.firstname || !userData.lastname || !userData.username || !userData.email || !userData.role) {
+      alert("Please fill in all required fields.");
+      return;
+    }
     if (userData._id) {
       dispatch(updateUser(userData._id, userData));
     }
@@ -104,6 +130,9 @@ export default function UsersTab() {
                 <MenuItem value="hotelOwner">Hotel Owner</MenuItem>
               </Select>
             </FormControl>
+            <Button variant="outlined" onClick={() => { setSearchQuery(""); setRoleFilter(""); }}>
+              Clear Filters
+            </Button>
           </Box>
           <TableContainer component={Paper}>
             <Table>
@@ -116,21 +145,31 @@ export default function UsersTab() {
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user._id}>
-                    <TableCell>{user.username}</TableCell>
-                    <TableCell>{user.phoneNumber}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleDialogOpen(user)}>
-                        <Edit fontSize="small" />
-                      </IconButton>
+              {filteredUsers.length === 0 ? (
+                <TableBody>
+                  <TableRow>
+                    <TableCell colSpan={5} align="center">
+                      No users found matching your search/filter criteria.
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
+                </TableBody>
+              ) : (
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user._id}>
+                      <TableCell>{user.username}</TableCell>
+                      <TableCell>{user.phoneNumber}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.role}</TableCell>
+                      <TableCell>
+                        <IconButton onClick={() => handleDialogOpen(user)}>
+                          <Edit fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              )}
             </Table>
           </TableContainer>
 
@@ -188,16 +227,19 @@ export default function UsersTab() {
                 value={userData.email}
                 onChange={handleInputChange}
               />
-              <TextField
-                margin="dense"
-                name="role"
-                label="Role"
-                type="text"
-                fullWidth
-                required
-                value={userData.role}
-                onChange={handleInputChange}
-              />
+              <FormControl margin="dense" fullWidth>
+                <InputLabel>Role</InputLabel>
+                <Select
+                  name="role"
+                  value={userData.role}
+                  onChange={handleInputChange}
+                  label="Role"
+                >
+                  <MenuItem value="admin">Admin</MenuItem>
+                  <MenuItem value="user">User</MenuItem>
+                  <MenuItem value="hotelOwner">Hotel Owner</MenuItem>
+                </Select>
+              </FormControl>
               <TextField
                 margin="dense"
                 name="gender"

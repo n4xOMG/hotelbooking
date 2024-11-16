@@ -4,6 +4,7 @@ const { verifyToken } = require("../config/jwtConfig");
 
 const router = express.Router();
 
+// Lấy thông tin cá nhân của chính mình
 router.get("/profile", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password -resetPasswordToken -resetPasswordExpires");
@@ -18,6 +19,7 @@ router.get("/profile", verifyToken, async (req, res) => {
   }
 });
 
+// Cập nhật hồ sơ cá nhân
 router.put("/profile", verifyToken, async (req, res) => {
   const { username, email } = req.body;
   try {
@@ -28,8 +30,12 @@ router.put("/profile", verifyToken, async (req, res) => {
   }
 });
 
-// Get list of users with search and filter functionality
-router.get("/users", verifyToken, async (req, res) => {
+// Lấy danh sách user (chỉ admin)
+router.get("/", verifyToken, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
   const { search, role } = req.query;
   try {
     let query = {};
@@ -53,8 +59,31 @@ router.get("/users", verifyToken, async (req, res) => {
   }
 });
 
-// Update user by ID
-router.put("/users/:id", verifyToken, async (req, res) => {
+// Lấy một user cụ thể qua ID (chỉ admin)
+router.get("/:id", verifyToken, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
+  try {
+    const user = await User.findById(req.params.id).select("-password -resetPasswordToken -resetPasswordExpires");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: `Server error: ${error.message}` });
+  }
+});
+
+// Cập nhật user qua ID (chỉ admin)
+router.put("/:id", verifyToken, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
   const { username, email, phoneNumber, role, gender, birthdate } = req.body;
   try {
     const user = await User.findByIdAndUpdate(

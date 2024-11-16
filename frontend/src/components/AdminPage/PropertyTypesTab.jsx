@@ -32,13 +32,17 @@ import { IconMenuItem } from "../IconMenuItem";
 export default function PropertyTypesTab() {
   const dispatch = useDispatch();
   const { propertyTypes, loading } = useSelector((store) => store.propertyType);
-  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const [menuAnchorEls, setMenuAnchorEls] = useState({});
   const [selectedPropertyType, setSelectedPropertyType] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [propertyTypeData, setPropertyTypeData] = useState({ type: "", description: "", icon: "" });
   const [iconAnchorEl, setIconAnchorEl] = useState(null);
-  const [iconSearch, setIconSearch] = useState(""); // state for icon search
-  const [searchQuery, setSearchQuery] = useState(""); // state for property type search
+  const [iconSearch, setIconSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [actionLoading, setActionLoading] = useState(false); // To handle loading for save/delete actions
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
   const iconOptions = Object.keys(Icons).map((icon) => ({
     label: icon,
     value: icon,
@@ -56,13 +60,13 @@ export default function PropertyTypesTab() {
     dispatch(fetchPropertyTypes());
   }, [dispatch]);
 
-  const handleMenuOpen = (event, propertyType) => {
-    setMenuAnchorEl(event.currentTarget);
-    setSelectedPropertyType(propertyType);
+  const handleMenuOpen = (event, id) => {
+    setMenuAnchorEls((prev) => ({ ...prev, [id]: event.currentTarget }));
+    setSelectedPropertyType(propertyTypes.find((type) => type._id === id));
   };
 
-  const handleMenuClose = () => {
-    setMenuAnchorEl(null);
+  const handleMenuClose = (id) => {
+    setMenuAnchorEls((prev) => ({ ...prev, [id]: null }));
     setSelectedPropertyType(null);
   };
 
@@ -75,6 +79,8 @@ export default function PropertyTypesTab() {
   const handleDialogClose = () => {
     setOpenDialog(false);
     setPropertyTypeData({ type: "", description: "", icon: "" });
+    setIconSearch("");
+    setIconAnchorEl(null);
   };
 
   const handleInputChange = (event) => {
@@ -82,19 +88,38 @@ export default function PropertyTypesTab() {
     setPropertyTypeData({ ...propertyTypeData, [name]: value });
   };
 
-  const handleSavePropertyType = () => {
-    if (propertyTypeData._id) {
-      dispatch(updatePropertyType(propertyTypeData._id, propertyTypeData));
-    } else {
-      dispatch(createPropertyType(propertyTypeData));
+  const handleSavePropertyType = async () => {
+    if (!propertyTypeData.type || !propertyTypeData.description) {
+      alert("Type and Description are required.");
+      return;
     }
-    handleDialogClose();
+
+    try {
+      setActionLoading(true);
+      if (propertyTypeData._id) {
+        await dispatch(updatePropertyType(propertyTypeData._id, propertyTypeData));
+      } else {
+        await dispatch(createPropertyType(propertyTypeData));
+      }
+      handleDialogClose();
+    } catch (error) {
+      console.error("Failed to save property type:", error);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const handleDeletePropertyType = (id) => {
-    dispatch(deletePropertyType(id));
-    dispatch(fetchPropertyTypes());
-    handleMenuClose();
+  const handleDeletePropertyType = async (id) => {
+    try {
+      setActionLoading(true);
+      await dispatch(deletePropertyType(id));
+      dispatch(fetchPropertyTypes());
+    } catch (error) {
+      console.error("Failed to delete property type:", error);
+    } finally {
+      setActionLoading(false);
+      handleMenuClose(id);
+    }
   };
 
   const handleIconClick = (event) => {
@@ -108,6 +133,12 @@ export default function PropertyTypesTab() {
   const handleIconSelect = (value) => {
     setPropertyTypeData((prev) => ({ ...prev, icon: value }));
     handleIconClose();
+  };
+
+  const confirmDeleteAction = () => {
+    handleDeletePropertyType(deleteId);
+    setConfirmDelete(false);
+    setDeleteId(null);
   };
 
   return (
@@ -152,11 +183,15 @@ export default function PropertyTypesTab() {
                   <IconButton onClick={() => handleDialogOpen(propertyType)}>
                     <Edit fontSize="small" />
                   </IconButton>
-                  <IconButton onClick={(event) => handleMenuOpen(event, propertyType)}>
+                  <IconButton onClick={(event) => handleMenuOpen(event, propertyType._id)}>
                     <MoreHoriz fontSize="small" />
                   </IconButton>
-                  <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={handleMenuClose}>
-                    <MenuItem onClick={() => handleDeletePropertyType(selectedPropertyType._id)}>
+                  <Menu
+                    anchorEl={menuAnchorEls[propertyType._id]}
+                    open={Boolean(menuAnchorEls[propertyType._id])}
+                    onClose={() => handleMenuClose(propertyType._id)}
+                  >
+                    <MenuItem onClick={() => handleDeletePropertyType(propertyType._id)}>
                       <Delete fontSize="small" sx={{ mr: 1 }} />
                       Delete
                     </MenuItem>
@@ -248,8 +283,21 @@ export default function PropertyTypesTab() {
           <Button onClick={handleDialogClose} color="primary">
             Cancel
           </Button>
-          <Button color="primary" onClick={handleSavePropertyType}>
-            Save
+          <Button onClick={handleSavePropertyType} color="primary" disabled={actionLoading}>
+            {actionLoading ? <CircularProgress size={24} /> : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogActions>
+          <Button onClick={() => setConfirmDelete(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={confirmDeleteAction} color="primary">
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>

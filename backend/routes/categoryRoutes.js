@@ -21,10 +21,18 @@ router.post("/", verifyToken, async (req, res) => {
   }
 });
 
-// Get all categories
+// Get all categories with search and filter
 router.get("/", async (req, res) => {
   try {
-    const categories = await Category.find();
+    const { name, description, icon } = req.query;
+
+    // Build filter object based on query params
+    const filter = {};
+    if (name) filter.name = new RegExp(name, "i"); // Case-insensitive regex search
+    if (description) filter.description = new RegExp(description, "i");
+    if (icon) filter.icon = new RegExp(icon, "i");
+
+    const categories = await Category.find(filter);
     res.json(categories);
   } catch (error) {
     res.status(500).json({ message: `Server error: ${error}` });

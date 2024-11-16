@@ -27,18 +27,19 @@ import { fetchCategories, createCategory, updateCategory, deleteCategory } from 
 import LoadingSpinner from "../LoadingSpinner";
 import { FixedSizeList as List } from "react-window";
 import { IconMenuItem } from "../IconMenuItem";
-import './CategoriesTab.css';
 
 export default function CategoriesTab() {
   const dispatch = useDispatch();
-  const { categories, loading } = useSelector((state) => state.category);
+  const { categories = [], loading } = useSelector((state) => state.category);
+
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [categoryData, setCategoryData] = useState({ name: "", description: "", icon: "" });
   const [iconAnchorEl, setIconAnchorEl] = useState(null);
-  const [iconSearch, setIconSearch] = useState(""); // state for icon search
-  const [searchQuery, setSearchQuery] = useState(""); // state for category search
+  const [iconSearch, setIconSearch] = useState(""); // Tìm kiếm icon
+  const [searchQuery, setSearchQuery] = useState(""); // Tìm kiếm danh mục
+
   const iconOptions = Object.keys(Icons).map((icon) => ({
     label: icon,
     value: icon,
@@ -49,22 +50,13 @@ export default function CategoriesTab() {
   );
 
   const filteredCategories = categories.filter((category) =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase())
+    category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    category.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
-
-  const handleMenuOpen = (event, category) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedCategory(category);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedCategory(null);
-  };
 
   const handleDialogOpen = (category = { name: "", description: "", icon: "" }) => {
     setCategoryData(category);
@@ -78,22 +70,31 @@ export default function CategoriesTab() {
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    setCategoryData({ ...categoryData, [name]: value });
+    setCategoryData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSaveCategory = () => {
+    if (categoryData.name.trim() === "" || categoryData.description.trim() === "" || categoryData.icon.trim() === "") {
+      alert("Please fill out all fields!");
+      return;
+    }
+
     if (categoryData._id) {
       dispatch(updateCategory(categoryData._id, categoryData));
     } else {
       dispatch(createCategory(categoryData));
     }
+
     handleDialogClose();
+    dispatch(fetchCategories());
   };
 
   const handleDeleteCategory = (id) => {
-    dispatch(deleteCategory(id));
-    dispatch(fetchCategories());
-    handleMenuClose();
+    if (id) {
+      dispatch(deleteCategory(id));
+      dispatch(fetchCategories());
+    }
+    setAnchorEl(null);
   };
 
   const handleIconClick = (event) => {
@@ -133,6 +134,7 @@ export default function CategoriesTab() {
               Add Category
             </Button>
           </Box>
+
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
@@ -151,17 +153,17 @@ export default function CategoriesTab() {
                     <TableCell>
                       {category.icon && Icons[category.icon]
                         ? React.createElement(Icons[category.icon])
-                        : null}
+                        : <Icons.HelpOutline />}
                     </TableCell>
                     <TableCell>
                       <IconButton onClick={() => handleDialogOpen(category)}>
                         <Edit fontSize="small" />
                       </IconButton>
-                      <IconButton onClick={(event) => handleMenuOpen(event, category)}>
+                      <IconButton onClick={(event) => setAnchorEl(event.currentTarget)}>
                         <Delete fontSize="small" />
                       </IconButton>
-                      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                        <MenuItem onClick={() => handleDeleteCategory(selectedCategory._id)}>
+                      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+                        <MenuItem onClick={() => handleDeleteCategory(category._id)}>
                           <Delete fontSize="small" sx={{ mr: 1 }} />
                           Delete
                         </MenuItem>
@@ -174,7 +176,7 @@ export default function CategoriesTab() {
           </TableContainer>
 
           <Dialog open={openDialog} onClose={handleDialogClose}>
-            <DialogTitle>{selectedCategory ? "Edit Category" : "Add Category"}</DialogTitle>
+            <DialogTitle>{categoryData._id ? "Edit Category" : "Add Category"}</DialogTitle>
             <DialogContent>
               <TextField
                 autoFocus

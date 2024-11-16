@@ -1,52 +1,47 @@
 import {
-  GET_PROFILE_REQUEST,
-  GET_PROFILE_SUCCESS,
-  GET_PROFILE_FAILED,
-  UPDATE_PROFILE_REQUEST,
-  UPDATE_PROFILE_SUCCESS,
-  UPDATE_PROFILE_FAILED,
-  FETCH_USER_REQUEST,
-  FETCH_USER_SUCCESS,
-  FETCH_USER_FAILURE,
-  UPDATE_USER_REQUEST,
-  UPDATE_USER_SUCCESS,
-  UPDATE_USER_FAILED,
-} from "./user.actionType";
+  CREATE_REPORT_REQUEST,
+  CREATE_REPORT_SUCCESS,
+  CREATE_REPORT_FAILURE,
+  FETCH_REPORTS_REQUEST,
+  FETCH_REPORTS_SUCCESS,
+  FETCH_REPORTS_FAILURE,
+  UPDATE_REPORT_STATUS_REQUEST,
+  UPDATE_REPORT_STATUS_SUCCESS,
+  UPDATE_REPORT_STATUS_FAILURE,
+} from "./report.actionType";
 
 const initialState = {
-  error: null,
-  user: null,
-  users: [],
+  reports: [],
   loading: false,
+  error: null,
 };
 
-export const userReducer = (state = initialState, action) => {
+export const reportReducer = (state = initialState, action) => {
   switch (action.type) {
-    case GET_PROFILE_REQUEST:
-    case UPDATE_PROFILE_REQUEST:
-    case FETCH_USER_REQUEST:
-    case UPDATE_USER_REQUEST:
+    case CREATE_REPORT_REQUEST:
+    case FETCH_REPORTS_REQUEST:
+    case UPDATE_REPORT_STATUS_REQUEST:
       return { ...state, loading: true, error: null };
 
-    case GET_PROFILE_SUCCESS:
-    case UPDATE_PROFILE_SUCCESS:
-      return { ...state, loading: false, error: null, user: action.payload };
+    case CREATE_REPORT_SUCCESS:
+      return { ...state, loading: false, reports: [...state.reports, action.payload], error: null };
 
-    case FETCH_USER_SUCCESS:
-      return { ...state, loading: false, error: null, users: action.payload };
+    case FETCH_REPORTS_SUCCESS:
+      return { ...state, loading: false, reports: action.payload, error: null };
 
-    case UPDATE_USER_SUCCESS:
+    case UPDATE_REPORT_STATUS_SUCCESS:
       return {
         ...state,
         loading: false,
+        reports: state.reports.map((report) =>
+          report._id === action.payload._id ? action.payload : report
+        ),
         error: null,
-        users: state.users.map((user) => (user._id === action.payload._id ? action.payload : user)),
       };
 
-    case GET_PROFILE_FAILED:
-    case UPDATE_PROFILE_FAILED:
-    case FETCH_USER_FAILURE:
-    case UPDATE_USER_FAILED:
+    case CREATE_REPORT_FAILURE:
+    case FETCH_REPORTS_FAILURE:
+    case UPDATE_REPORT_STATUS_FAILURE:
       return { ...state, loading: false, error: action.payload };
 
     default:
