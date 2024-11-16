@@ -37,6 +37,7 @@ export default function ReportsTab() {
     dispatch(fetchReports());
   }, [dispatch]);
 
+  // Filter the reports based on search query and selected status
   const filteredReports = Array.isArray(reports) ? reports.filter((report) =>
     (report.reportedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
     report.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -61,6 +62,7 @@ export default function ReportsTab() {
 
   const handleSaveReport = () => {
     if (reportData._id) {
+      // Updating existing report
       dispatch(updateReportStatus(reportData._id, reportData.status));
     }
     handleDialogClose();
@@ -101,6 +103,7 @@ export default function ReportsTab() {
               </Select>
             </FormControl>
           </Box>
+
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
@@ -150,6 +153,7 @@ export default function ReportsTab() {
                 required
                 value={reportData.reportedBy}
                 onChange={handleInputChange}
+                disabled
               />
               <TextField
                 margin="dense"
@@ -160,6 +164,7 @@ export default function ReportsTab() {
                 required
                 value={reportData.type}
                 onChange={handleInputChange}
+                disabled
               />
               <TextField
                 margin="dense"
@@ -170,6 +175,7 @@ export default function ReportsTab() {
                 required
                 value={reportData.reason}
                 onChange={handleInputChange}
+                disabled
               />
               <TextField
                 margin="dense"

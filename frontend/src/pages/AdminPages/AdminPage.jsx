@@ -12,6 +12,7 @@ import CategoriesTab from "../../components/AdminPage/CategoriesTab";
 import PropertyTypesTab from "../../components/AdminPage/PropertyTypesTab";
 import AmenitiesTab from "../../components/AdminPage/AmenitiesTab";
 import UsersTab from "../../components/AdminPage/UsersTab";
+import ReportsTab from "../../components/AdminPage/ReportsTab";
 export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("categories");
@@ -110,6 +111,7 @@ export default function AdminPage() {
         <Box sx={{ py: 2 }}>
           {activeTab === "categories" && <CategoriesTab />}
           {activeTab === "propertyTypes" && <PropertyTypesTab />}
+          {activeTab === "reports" && <ReportsTab />}
           {activeTab === "amenities" && <AmenitiesTab />}
           {activeTab === "users" && <UsersTab />}
         </Box>
