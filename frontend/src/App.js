@@ -19,6 +19,7 @@ import ManageHotelPage from "./pages/UserPages/ManageHotelPage";
 import HotelCheckout from "./pages/UserPages/HotelCheckout";
 import EmailVerification from "./pages/Authentication/EmailVerification";
 import SearchResults from "./pages/UserPages/SearchResults";
+import ImageGallery from "./components/HotelDetails/ImageGallery";
 function App() {
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.user, shallowEqual);
@@ -55,6 +56,7 @@ function App() {
         <Route path="/messages" element={user ? <MessagePage /> : <HomePage />} />
         <Route path="/messages/:chatId/:user2Id" element={user ? <MessagePage /> : <HomePage />} />
         <Route path="/hotels/:id" element={<HotelDetails />} />
+        <Route path="/hotels/:id/images" element={<ImageGallery />} />
         <Route path="/list-properties" element={<PropertyListingPage />} />
         <Route path="/list-properties/:id" element={<PropertyListingPage />} />
         <Route path="/checkout/:id" element={<HotelCheckout />} />

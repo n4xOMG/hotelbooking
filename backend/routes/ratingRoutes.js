@@ -5,6 +5,22 @@ const Hotel = require("../models/Hotel");
 
 const router = express.Router();
 
+// Helper function to update avgRating of a hotel
+const updateHotelAvgRating = async (hotelId) => {
+  try {
+    const ratings = await Rating.find({ hotel: hotelId });
+    if (ratings.length === 0) {
+      await Hotel.findByIdAndUpdate(hotelId, { avgRating: 0 });
+    } else {
+      const avg = ratings.reduce((acc, rating) => acc + rating.value, 0) / ratings.length;
+      await Hotel.findByIdAndUpdate(hotelId, { avgRating: avg });
+    }
+  } catch (error) {
+    console.error("Error updating average rating:", error);
+    throw error;
+  }
+};
+
 // Create a new rating
 router.post("/", verifyToken, async (req, res) => {
   const { value, comment, images, hotel } = req.body;
@@ -29,6 +45,9 @@ router.post("/", verifyToken, async (req, res) => {
 
     // Add rating to hotel's ratings array
     await Hotel.findByIdAndUpdate(hotel, { $push: { ratings: newRating._id } });
+
+    // Update the average rating of the hotel
+    await updateHotelAvgRating(hotel);
 
     res.status(201).json(newRating);
   } catch (error) {
@@ -85,7 +104,7 @@ router.get("/hotel/:hotelId", async (req, res) => {
       return res.status(404).json({ message: "Hotel not found" });
     }
 
-    const ratings = await Rating.find({ _id: { $in: hotel.ratings } }).populate("user", "avatarUrl firstname lastname email");
+    const ratings = await Rating.find({ hotel: hotelId }).populate("user", "avatarUrl firstname lastname email");
     res.status(200).json(ratings);
   } catch (error) {
     res.status(500).json({ message: `Server error: ${error.message}` });
@@ -112,6 +131,9 @@ router.put("/:id", verifyToken, async (req, res) => {
     rating.images = images;
     await rating.save();
 
+    // Update the average rating of the hotel
+    await updateHotelAvgRating(rating.hotel);
+
     res.json(rating);
   } catch (error) {
     res.status(500).json({ message: `Server error: ${error}` });
@@ -132,7 +154,16 @@ router.delete("/:id", verifyToken, async (req, res) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
+    const hotelId = rating.hotel;
+
     await rating.remove();
+
+    // Remove rating from hotel's ratings array
+    await Hotel.findByIdAndUpdate(hotelId, { $pull: { ratings: rating._id } });
+
+    // Update the average rating of the hotel
+    await updateHotelAvgRating(hotelId);
+
     res.json({ message: "Rating deleted" });
   } catch (error) {
     res.status(500).json({ message: `Server error: ${error}` });

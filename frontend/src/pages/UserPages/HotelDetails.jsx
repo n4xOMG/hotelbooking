@@ -45,7 +45,11 @@ export default function HotelDetails() {
           <Box sx={{ mx: "auto", px: 2 }}>
             <Header />
             <HotelDetailHeader title={hotel?.name} />
-            {hotel?.images ? <HotelImages images={hotel?.images} /> : <Typography variant="body1">No images available.</Typography>}
+            {hotel?.images ? (
+              <HotelImages hotelId={hotel?._id} images={hotel?.images} />
+            ) : (
+              <Typography variant="body1">No images available.</Typography>
+            )}
             <Grid container spacing={4}>
               <Grid item xs={12} md={8}>
                 <HotelInfo hotel={hotel} />

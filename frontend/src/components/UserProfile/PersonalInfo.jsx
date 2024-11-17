@@ -5,9 +5,11 @@ import { useDispatch } from "react-redux";
 import { sendEmailVerificationLink, updateUserProfile } from "../../redux/user/user.action";
 import UploadToCloudinary from "../../utils/uploadToCloudinary";
 import { getOptimizedImageUrl } from "../../utils/optimizeImages";
+import LoadingSpinner from "../LoadingSpinner";
 
 export default function PersonalInfo({ user }) {
   const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState({
     file: "",
     url: user.avatarUrl || "",
@@ -39,19 +41,34 @@ export default function PersonalInfo({ user }) {
 
   const handleSubmit = async () => {
     if (formData.email !== user.email) {
-      // Send email verification link
-      await dispatch(sendEmailVerificationLink(formData.email));
-    } else {
-      let avatarUrl = "";
-      if (avatar.file) {
-        avatarUrl = await UploadToCloudinary(avatar.file, "user_avatar");
+      try {
+        setLoading(true);
+        await dispatch(sendEmailVerificationLink(formData.email));
+      } catch (error) {
+        console.error("Error sending email verification link:", error);
+      } finally {
+        setLoading(false);
       }
-      const editData = {
-        ...formData,
-        avatarUrl,
-      };
-      // Update other profile information
-      await dispatch(updateUserProfile(editData));
+    } else {
+      setLoading(true);
+      try {
+        let editData = {
+          ...formData,
+        };
+        let avatarUrl = "";
+        if (avatar.file) {
+          avatarUrl = await UploadToCloudinary(avatar.file, "user_avatar");
+          editData = {
+            ...editData,
+            avatarUrl,
+          };
+        }
+        await dispatch(updateUserProfile(editData));
+      } catch (error) {
+        console.error("Error updating user profile:", error);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -64,33 +81,46 @@ export default function PersonalInfo({ user }) {
   };
 
   return (
-    <Card>
-      <CardHeader title="Personal Information" subheader="Manage your personal details" />
-      <CardContent sx={{ display: "grid", gap: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-          <Avatar src={getOptimizedImageUrl(avatar.url)} sx={{ width: 56, height: 56, mr: 2 }} />
-          <IconButton color="primary" component="label">
-            <input hidden accept="image/*" type="file" onChange={handleAvatarChange} />
-            <PhotoCamera />
-          </IconButton>
-        </Box>
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-          <TextField label="First Name" variant="outlined" fullWidth name="firstname" value={formData.firstname} onChange={handleChange} />
-          <TextField label="Last Name" variant="outlined" fullWidth name="lastname" value={formData.lastname} onChange={handleChange} />
-        </Box>
-        <TextField label="Email" variant="outlined" fullWidth name="email" value={formData.email} onChange={handleChange} />
-        <TextField
-          label="Phone Number"
-          variant="outlined"
-          fullWidth
-          name="phoneNumber"
-          value={formData.phoneNumber}
-          onChange={handleChange}
-        />
-        <Button variant="contained" sx={{ mt: 2 }} onClick={handleSubmit}>
-          Save Changes
-        </Button>
-      </CardContent>
-    </Card>
+    <>
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        <Card>
+          <CardHeader title="Personal Information" subheader="Manage your personal details" />
+          <CardContent sx={{ display: "grid", gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Avatar src={getOptimizedImageUrl(avatar.url)} sx={{ width: 56, height: 56, mr: 2 }} />
+              <IconButton color="primary" component="label">
+                <input hidden accept="image/*" type="file" onChange={handleAvatarChange} />
+                <PhotoCamera />
+              </IconButton>
+            </Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+              <TextField
+                label="First Name"
+                variant="outlined"
+                fullWidth
+                name="firstname"
+                value={formData.firstname}
+                onChange={handleChange}
+              />
+              <TextField label="Last Name" variant="outlined" fullWidth name="lastname" value={formData.lastname} onChange={handleChange} />
+            </Box>
+            <TextField label="Email" variant="outlined" fullWidth name="email" value={formData.email} onChange={handleChange} />
+            <TextField
+              label="Phone Number"
+              variant="outlined"
+              fullWidth
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+            />
+            <Button variant="contained" sx={{ mt: 2 }} onClick={handleSubmit}>
+              Save Changes
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </>
   );
 }

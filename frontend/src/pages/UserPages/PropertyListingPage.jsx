@@ -122,35 +122,40 @@ export default function PropertyListingPage() {
   };
 
   return (
-    <Container>
-      <Header />
-      {loading && <LoadingSpinner />}
+    <>
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        <Container>
+          <Header />
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <PropertyDetails propertyDetails={propertyDetails} setPropertyDetails={setPropertyDetails} />
-        <RoomDetails roomDetails={roomDetails} setRoomDetails={setRoomDetails} />
-        <PricingAvailability pricingAvailability={pricingAvailability} setPricingAvailability={setPricingAvailability} />
-        <PropertyImages images={images} setImages={setImages} />
-      </Box>
-      <Dialog open={dialogOpen} onClose={handleDialogClose}>
-        <DialogTitle>{dialogTitle}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>{dialogMessage}</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose} color="primary">
-            OK
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Box sx={{ mb: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-        <Button variant="outlined" onClick={() => navigate("/")}>
-          Cancel
-        </Button>
-        <Button variant="contained" onClick={handlePublish}>
-          {id ? "Update" : "Publish"}
-        </Button>
-      </Box>
-    </Container>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <PropertyDetails propertyDetails={propertyDetails} setPropertyDetails={setPropertyDetails} />
+            <RoomDetails roomDetails={roomDetails} setRoomDetails={setRoomDetails} />
+            <PricingAvailability pricingAvailability={pricingAvailability} setPricingAvailability={setPricingAvailability} />
+            <PropertyImages images={images} setImages={setImages} />
+          </Box>
+          <Dialog open={dialogOpen} onClose={handleDialogClose}>
+            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogContent>
+              <DialogContentText>{dialogMessage}</DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleDialogClose} color="primary">
+                OK
+              </Button>
+            </DialogActions>
+          </Dialog>
+          <Box sx={{ mb: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
+            <Button variant="outlined" onClick={() => navigate("/")}>
+              Cancel
+            </Button>
+            <Button variant="contained" onClick={handlePublish}>
+              {id ? "Update" : "Publish"}
+            </Button>
+          </Box>
+        </Container>
+      )}
+    </>
   );
 }

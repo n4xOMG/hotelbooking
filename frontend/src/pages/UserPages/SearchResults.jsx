@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { Box, Container, Grid, Typography, CircularProgress } from "@mui/material";
-import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { Favorite, PinDrop as PinDropIcon, CalendarToday } from "@mui/icons-material";
+import { CalendarToday, Favorite, PinDrop as PinDropIcon } from "@mui/icons-material";
+import { Box, Container, Grid, Typography } from "@mui/material";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import IconButton from "@mui/material/IconButton";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../api/api";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function SearchResults() {
   const location = useLocation();
@@ -47,14 +48,6 @@ export default function SearchResults() {
     fetchHotels();
   }, [searchLocation, maxGuests, checkIn, checkOut]);
 
-  if (loading) {
-    return (
-      <Box sx={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   if (error) {
     return (
       <Box sx={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
@@ -74,95 +67,101 @@ export default function SearchResults() {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <Box
-        component="header"
-        sx={{
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          width: "100%",
-          bgcolor: "background.paper",
-          backdropFilter: "blur(5px)",
-          borderBottom: 1,
-          borderColor: "divider",
-        }}
-      >
-        <Container sx={{ py: 4 }}>
-          <Typography variant="h5">Search Results</Typography>
-          <Typography variant="body2" color="text.secondary">
-            {hotels.length} hotel(s) found for "{searchLocation}" with {maxGuests} guest(s)
-          </Typography>
-          {checkIn && checkOut && (
-            <Typography variant="body2" color="text.secondary">
-              Check-in: {checkIn} | Check-out: {checkOut}
-            </Typography>
-          )}
-        </Container>
-      </Box>
+    <>
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+          <Box
+            component="header"
+            sx={{
+              position: "sticky",
+              top: 0,
+              zIndex: 50,
+              width: "100%",
+              bgcolor: "background.paper",
+              backdropFilter: "blur(5px)",
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Container sx={{ py: 4 }}>
+              <Typography variant="h5">Search Results</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {hotels.length} hotel(s) found for "{searchLocation}" with {maxGuests} guest(s)
+              </Typography>
+              {checkIn && checkOut && (
+                <Typography variant="body2" color="text.secondary">
+                  Check-in: {checkIn} | Check-out: {checkOut}
+                </Typography>
+              )}
+            </Container>
+          </Box>
 
-      <Container component="main" sx={{ py: 6 }}>
-        <Grid container spacing={4}>
-          {hotels.map((hotel) => (
-            <Grid item key={hotel._id} xs={12} sm={6} md={4} lg={3}>
-              <Card
-                sx={{ height: "100%", display: "flex", flexDirection: "column", cursor: "pointer" }}
-                onClick={() => navigate(`/hotel/${hotel._id}`)}
-              >
-                <Box sx={{ position: "relative" }}>
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={hotel.images && hotel.images.length > 0 ? hotel.images[0] : "/placeholder.svg"}
-                    alt={hotel.name}
-                  />
-                  <IconButton
-                    sx={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
-                      color: "common.white",
-                      bgcolor: "rgba(0, 0, 0, 0.5)",
-                      "&:hover": { bgcolor: "rgba(0, 0, 0, 0.7)" },
-                    }}
+          <Container component="main" sx={{ py: 6 }}>
+            <Grid container spacing={4}>
+              {hotels.map((hotel) => (
+                <Grid item key={hotel._id} xs={12} sm={6} md={4} lg={3}>
+                  <Card
+                    sx={{ height: "100%", display: "flex", flexDirection: "column", cursor: "pointer" }}
+                    onClick={() => navigate(`/hotel/${hotel._id}`)}
                   >
-                    <Favorite fontSize="small" />
-                  </IconButton>
-                </Box>
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography gutterBottom variant="h6" component="h2">
-                    {hotel.name}
-                  </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <PinDropIcon fontSize="small" />
-                    <Typography variant="body2" color="text.secondary">
-                      {hotel.location}
-                    </Typography>
-                  </Box>
-                  {checkIn && checkOut && (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1 }}>
-                      <CalendarToday fontSize="small" />
-                      <Typography variant="body2" color="text.secondary">
-                        Check-in: {checkIn}
-                      </Typography>
-                      <CalendarToday fontSize="small" />
-                      <Typography variant="body2" color="text.secondary">
-                        Check-out: {checkOut}
-                      </Typography>
+                    <Box sx={{ position: "relative" }}>
+                      <CardMedia
+                        component="img"
+                        height="200"
+                        image={hotel.images && hotel.images.length > 0 ? hotel.images[0] : "/placeholder.svg"}
+                        alt={hotel.name}
+                      />
+                      <IconButton
+                        sx={{
+                          position: "absolute",
+                          top: 8,
+                          right: 8,
+                          color: "common.white",
+                          bgcolor: "rgba(0, 0, 0, 0.5)",
+                          "&:hover": { bgcolor: "rgba(0, 0, 0, 0.7)" },
+                        }}
+                      >
+                        <Favorite fontSize="small" />
+                      </IconButton>
                     </Box>
-                  )}
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    Max Guests: {hotel.maxGuests}
-                  </Typography>
-                  <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 1 }}>
-                    ${hotel.pricePerNight} / night
-                  </Typography>
-                </CardContent>
-              </Card>
+                    <CardContent sx={{ flexGrow: 1 }}>
+                      <Typography gutterBottom variant="h6" component="h2">
+                        {hotel.name}
+                      </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <PinDropIcon fontSize="small" />
+                        <Typography variant="body2" color="text.secondary">
+                          {hotel.location}
+                        </Typography>
+                      </Box>
+                      {checkIn && checkOut && (
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1 }}>
+                          <CalendarToday fontSize="small" />
+                          <Typography variant="body2" color="text.secondary">
+                            Check-in: {checkIn}
+                          </Typography>
+                          <CalendarToday fontSize="small" />
+                          <Typography variant="body2" color="text.secondary">
+                            Check-out: {checkOut}
+                          </Typography>
+                        </Box>
+                      )}
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Max Guests: {hotel.maxGuests}
+                      </Typography>
+                      <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 1 }}>
+                        ${hotel.pricePerNight} / night
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
-          ))}
-        </Grid>
-      </Container>
-    </Box>
+          </Container>
+        </Box>
+      )}
+    </>
   );
 }

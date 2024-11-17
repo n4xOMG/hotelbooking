@@ -62,7 +62,7 @@ export default function Header() {
         alignItems: "center",
       }}
     >
-      <Link href="#" sx={linkStyles}>
+      <Link href="/" sx={linkStyles}>
         <MountainIcon sx={{ height: 24, width: 24 }} />
         <Typography>Acme Hotels</Typography>
       </Link>

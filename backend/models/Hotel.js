@@ -13,7 +13,7 @@ const hotelSchema = new mongoose.Schema({
   pricePerNight: { type: Number, required: true },
   amenities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Amenity", required: true }],
   ratings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Rating", required: true }],
-  avgRating: { type: Number, default: 0 },
+  avgRating: { type: Number, default: 5 },
   images: [String],
   maxGuests: { type: Number, required: true, default: 1 },
   petFriendly: { type: Boolean, default: false },
