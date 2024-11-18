@@ -27,7 +27,7 @@ export default function PropertyListingPage() {
     petFriendly: false,
     amenities: [],
   });
-  const [roomDetails, setRoomDetails] = useState([{ size: "", beds: 0, baths: 0, isAvailable: true }]);
+  const [roomDetails, setRoomDetails] = useState([{ size: "", beds: 0, baths: 0 }]);
   const [pricingAvailability, setPricingAvailability] = useState({
     pricePerNight: 0,
     isAvailable: true,
@@ -42,6 +42,7 @@ export default function PropertyListingPage() {
       setLoading(true);
       dispatch(fetchHotelById(id)).then((response) => {
         const hotelData = response.payload;
+        console.log("Fetched Hotel Data:", response.payload);
         setPropertyDetails({
           name: hotelData.name,
           location: hotelData.location,
@@ -52,7 +53,13 @@ export default function PropertyListingPage() {
           petFriendly: hotelData.petFriendly,
           amenities: hotelData.amenities.map((amenity) => amenity._id),
         });
-        setRoomDetails(hotelData.rooms);
+        setRoomDetails(
+          hotelData.rooms.map((room) => ({
+            size: room.size,
+            beds: room.beds,
+            baths: room.baths,
+          }))
+        );
         setPricingAvailability({
           pricePerNight: hotelData.pricePerNight,
           isAvailable: hotelData.isAvailable,
@@ -81,12 +88,7 @@ export default function PropertyListingPage() {
         categories: [propertyDetails.category],
         maxGuests: propertyDetails.maxGuests,
         petFriendly: propertyDetails.petFriendly,
-        rooms: roomDetails.map((room) => ({
-          size: room.size,
-          beds: room.beds,
-          baths: room.baths,
-          isAvailable: room.isAvailable,
-        })),
+        rooms: roomDetails,
         totalRooms: roomDetails.length,
         totalBeds: roomDetails.reduce((total, room) => total + room.beds, 0),
         totalBaths: roomDetails.reduce((total, room) => total + room.baths, 0),

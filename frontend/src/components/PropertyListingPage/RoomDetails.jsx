@@ -1,45 +1,63 @@
 import React from "react";
-import { Box, Typography, TextField, Button, FormControlLabel, Switch } from "@mui/material";
+import { Box, Button, TextField, Typography, IconButton } from "@mui/material";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 
 export default function RoomDetails({ roomDetails, setRoomDetails }) {
   const handleChange = (index, e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
     const updatedRooms = [...roomDetails];
 
-    if (type === "checkbox") {
-      updatedRooms[index] = {
-        ...updatedRooms[index],
-        [name]: checked,
-      };
-    } else {
-      updatedRooms[index] = {
-        ...updatedRooms[index],
-        [name]: type === "number" ? Number(value) : value,
-      };
-    }
+    updatedRooms[index] = {
+      ...updatedRooms[index],
+      [name]: type === "number" ? Number(value) : value,
+    };
 
     setRoomDetails(updatedRooms);
   };
 
   const handleAddRoom = () => {
-    setRoomDetails([...roomDetails, { size: "", beds: 0, baths: 0, price: 0, isAvailable: true }]);
+    setRoomDetails([...roomDetails, { size: "", beds: 0, baths: 0 }]);
+  };
+
+  const handleRemoveRoom = (index) => {
+    const updatedRooms = roomDetails.filter((_, i) => i !== index);
+    setRoomDetails(updatedRooms);
   };
 
   return (
-    <Box sx={{ p: 2, boxShadow: 1, bgcolor: "white", borderRadius: 1 }}>
-      <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
+    <Box sx={{ mt: 4 }}>
+      <Typography variant="h5" gutterBottom>
         Room Details
       </Typography>
-
       {roomDetails.map((room, index) => (
-        <Box key={index} sx={{ mb: 2 }}>
-          <Typography variant="h7" sx={{ fontWeight: "bold", mb: 2 }}>
+        <Box
+          key={index}
+          sx={{
+            border: "1px solid #ccc",
+            borderRadius: 2,
+            p: 2,
+            mb: 2,
+            position: "relative",
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
             Room {index + 1}
           </Typography>
-          <TextField fullWidth label="Room Size" name="size" value={room.size} onChange={(e) => handleChange(index, e)} sx={{ mb: 2 }} />
           <TextField
             fullWidth
-            label="Bed Count"
+            required
+            label="Size (sq ft)"
+            name="size"
+            type="number"
+            value={room.size}
+            onChange={(e) => handleChange(index, e)}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            required
+            label="Number of Beds"
             name="beds"
             type="number"
             value={room.beds}
@@ -48,23 +66,23 @@ export default function RoomDetails({ roomDetails, setRoomDetails }) {
           />
           <TextField
             fullWidth
-            label="Bathroom Count"
+            required
+            label="Number of Bathrooms"
             name="baths"
             type="number"
             value={room.baths}
             onChange={(e) => handleChange(index, e)}
             sx={{ mb: 2 }}
           />
-          <FormControlLabel
-            control={<Switch name="isAvailable" checked={room.isAvailable} onChange={(e) => handleChange(index, e)} />}
-            label="Available for Booking"
-            sx={{ mb: 2 }}
-          />
+          {roomDetails.length > 1 && (
+            <IconButton onClick={() => handleRemoveRoom(index)} sx={{ position: "absolute", top: 8, right: 8 }}>
+              <RemoveCircleOutlineIcon color="error" />
+            </IconButton>
+          )}
         </Box>
       ))}
-
-      <Button variant="outlined" onClick={handleAddRoom}>
-        + Add Another Room
+      <Button variant="outlined" startIcon={<AddCircleOutlineIcon />} onClick={handleAddRoom}>
+        Add Another Room
       </Button>
     </Box>
   );
