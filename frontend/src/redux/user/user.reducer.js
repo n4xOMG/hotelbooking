@@ -1,3 +1,5 @@
+// user.reducer.js
+
 import {
   GET_PROFILE_REQUEST,
   GET_PROFILE_SUCCESS,
@@ -15,41 +17,101 @@ import {
 
 const initialState = {
   error: null,
-  user: null,
-  users: [],
+  user: null,    // For individual user profile
+  users: [],     // For list of users (admin)
   loading: false,
 };
 
 export const userReducer = (state = initialState, action) => {
   switch (action.type) {
+    // Get Current User Profile
     case GET_PROFILE_REQUEST:
-    case UPDATE_PROFILE_REQUEST:
-    case FETCH_USER_REQUEST:
-    case UPDATE_USER_REQUEST:
-      return { ...state, loading: true, error: null };
-
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
     case GET_PROFILE_SUCCESS:
-    case UPDATE_PROFILE_SUCCESS:
-      return { ...state, loading: false, error: null, user: action.payload };
-
-    case FETCH_USER_SUCCESS:
-      return { ...state, loading: false, error: null, users: action.payload };
-
-    case UPDATE_USER_SUCCESS:
       return {
         ...state,
         loading: false,
-        error: null,
-        users: state.users.map((user) => (user._id === action.payload._id ? action.payload : user)),
+        user: action.payload,
+      };
+    case GET_PROFILE_FAILED:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
       };
 
-    case GET_PROFILE_FAILED:
+    // Update Current User Profile
+    case UPDATE_PROFILE_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+    case UPDATE_PROFILE_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        user: action.payload,
+      };
     case UPDATE_PROFILE_FAILED:
-    case FETCH_USER_FAILURE:
-    case UPDATE_USER_FAILED:
-      return { ...state, loading: false, error: action.payload };
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      };
 
+    // Fetch All Users (Admin)
+    case FETCH_USER_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+    case FETCH_USER_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        users: action.payload,
+      };
+    case FETCH_USER_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      };
+
+    // Update User by ID (Admin)
+    case UPDATE_USER_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+    case UPDATE_USER_SUCCESS:
+      // Update the specific user in the users array
+      const updatedUsers = state.users.map((user) =>
+        user._id === action.payload._id ? action.payload : user
+      );
+      return {
+        ...state,
+        loading: false,
+        users: updatedUsers,
+      };
+    case UPDATE_USER_FAILED:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      };
+
+    // Default case
     default:
       return state;
   }
 };
+
+export default userReducer;

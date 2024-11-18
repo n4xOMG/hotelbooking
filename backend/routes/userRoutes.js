@@ -32,10 +32,6 @@ router.put("/profile", verifyToken, async (req, res) => {
 
 // Lấy danh sách user (chỉ admin)
 router.get("/", verifyToken, async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Access denied" });
-  }
-
   const { search, role } = req.query;
   try {
     let query = {};
@@ -61,10 +57,6 @@ router.get("/", verifyToken, async (req, res) => {
 
 // Lấy một user cụ thể qua ID (chỉ admin)
 router.get("/:id", verifyToken, async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Access denied" });
-  }
-
   try {
     const user = await User.findById(req.params.id).select("-password -resetPasswordToken -resetPasswordExpires");
 

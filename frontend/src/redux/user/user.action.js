@@ -1,78 +1,117 @@
+// user.action.js
+
 import axios from "axios";
 import { api, API_BASE_URL } from "../../api/api";
 import {
-  GET_PROFILE_FAILED,
   GET_PROFILE_REQUEST,
   GET_PROFILE_SUCCESS,
-  UPDATE_PROFILE_FAILED,
+  GET_PROFILE_FAILED,
   UPDATE_PROFILE_REQUEST,
   UPDATE_PROFILE_SUCCESS,
-
- 
-  FETCH_USER_FAILURE,
+  UPDATE_PROFILE_FAILED,
   FETCH_USER_REQUEST,
   FETCH_USER_SUCCESS,
-  UPDATE_USER_FAILED,
+  FETCH_USER_FAILURE,
   UPDATE_USER_REQUEST,
   UPDATE_USER_SUCCESS,
-
+  UPDATE_USER_FAILED,
 } from "./user.actionType";
 
-export const getCurrentUserByJwt = (jwt) => async (dispatch) => {
+// Helper function to get the JWT token from localStorage
+const getAuthToken = () => {
+  return localStorage.getItem("token");
+};
+
+// Get Current User Profile by JWT
+export const getCurrentUserByJwt = () => async (dispatch) => {
   dispatch({ type: GET_PROFILE_REQUEST });
   try {
-    const { data } = await axios.get(`${API_BASE_URL}/user/profile`, {
+    const response = await axios.get(`${API_BASE_URL}/user/profile`, {
       headers: {
-        Authorization: `Bearer ${jwt}`,
+        Authorization: `Bearer ${getAuthToken()}`,
       },
     });
-
-    dispatch({ type: GET_PROFILE_SUCCESS, payload: data });
-    return { payload: data };
+    dispatch({ type: GET_PROFILE_SUCCESS, payload: response.data });
+    return { payload: response.data };
   } catch (error) {
     if (error.response && error.response.status === 401) {
-      dispatch({ type: GET_PROFILE_FAILED, payload: "Session expired. Please sign in again." });
+      dispatch({
+        type: GET_PROFILE_FAILED,
+        payload: "Session expired. Please sign in again.",
+      });
       return { error: "UNAUTHORIZED" };
     }
-    dispatch({ type: GET_PROFILE_FAILED, payload: error.message });
+    dispatch({
+      type: GET_PROFILE_FAILED,
+      payload: error.response?.data?.message || error.message,
+    });
+    return { error: error.message };
   }
 };
+
+// Update Current User Profile
 export const updateUserProfile = (reqData) => async (dispatch) => {
   dispatch({ type: UPDATE_PROFILE_REQUEST });
   try {
-    const { data } = await api.put(`${API_BASE_URL}/api/user/profile`, reqData.data);
-
-    dispatch({ type: UPDATE_PROFILE_SUCCESS, payload: data });
-    return { payload: data };
+    const response = await axios.put(
+      `${API_BASE_URL}/user/profile`,
+      reqData,
+      {
+        headers: {
+          Authorization: `Bearer ${getAuthToken()}`,
+        },
+      }
+    );
+    dispatch({ type: UPDATE_PROFILE_SUCCESS, payload: response.data });
+    return { payload: response.data };
   } catch (error) {
-    console.log("Api error: ", error.message);
-    dispatch({ type: UPDATE_PROFILE_FAILED, payload: error.message });
+    console.error("API Error:", error.message);
+    dispatch({
+      type: UPDATE_PROFILE_FAILED,
+      payload: error.response?.data?.message || error.message,
+    });
+    return { error: error.message };
   }
 };
 
+// Fetch All Users (Admin Only)
 export const fetchUsers = () => async (dispatch) => {
   dispatch({ type: FETCH_USER_REQUEST });
   try {
-    const response = await fetch('/api/users'); // Adjust the API endpoint as necessary
-    const data = await response.json();
-    dispatch({ type: FETCH_USER_SUCCESS, payload: data });
+    const response = await api.get(`${API_BASE_URL}/user`);
+    dispatch({ type: FETCH_USER_SUCCESS, payload: response.data });
   } catch (error) {
-    dispatch({ type: FETCH_USER_FAILURE, error });
+    dispatch({
+      type: FETCH_USER_FAILURE,
+      payload: error.response?.data?.message || error.message,
+    });
   }
 };
 
-export const updateUser = (id, user) => async (dispatch) => {
+// Fetch Single User by ID (Admin Only)
+export const fetchUserById = (id) => async (dispatch) => {
+  dispatch({ type: FETCH_USER_REQUEST });
+  try {
+    const response = await api.get(`${API_BASE_URL}/user/${id}`);
+    dispatch({ type: FETCH_USER_SUCCESS, payload: response.data });
+  } catch (error) {
+    dispatch({
+      type: FETCH_USER_FAILURE,
+      payload: error.response?.data?.message || error.message,
+    });
+  }
+};
+
+// Update User by ID (Admin Only)
+export const updateUser = (id, userData) => async (dispatch) => {
   dispatch({ type: UPDATE_USER_REQUEST });
   try {
-    const response = await fetch(`/api/users/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(user),
-    });
-    const data = await response.json();
-    dispatch({ type: UPDATE_USER_SUCCESS, payload: data });
+    const response = await api.put(`${API_BASE_URL}/user/${id}`, userData);
+    dispatch({ type: UPDATE_USER_SUCCESS, payload: response.data });
   } catch (error) {
-    dispatch({ type: UPDATE_USER_FAILED, error });
+    dispatch({
+      type: UPDATE_USER_FAILED,
+      payload: error.response?.data?.message || error.message,
+    });
   }
 };
-

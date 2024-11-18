@@ -1,5 +1,4 @@
 import { api, API_BASE_URL } from "../../api/api";
-import axios from "axios";
 import {
   FETCH_CATEGORIES_REQUEST,
   FETCH_CATEGORIES_SUCCESS,
@@ -22,7 +21,7 @@ import {
 export const fetchCategories = () => async (dispatch) => {
   dispatch({ type: FETCH_CATEGORIES_REQUEST });
   try {
-    const { data } = await axios.get(`${API_BASE_URL}/categories`);
+    const { data } = await api.get(`${API_BASE_URL}/categories`);
     dispatch({ type: FETCH_CATEGORIES_SUCCESS, payload: data });
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message;
@@ -34,7 +33,7 @@ export const fetchCategories = () => async (dispatch) => {
 export const fetchCategory = (id) => async (dispatch) => {
   dispatch({ type: FETCH_CATEGORY_REQUEST });
   try {
-    const { data } = await axios.get(`${API_BASE_URL}/categories/${id}`);
+    const { data } = await api.get(`${API_BASE_URL}/categories/${id}`);
     dispatch({ type: FETCH_CATEGORY_SUCCESS, payload: data });
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message;

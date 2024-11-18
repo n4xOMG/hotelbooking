@@ -257,7 +257,7 @@ export default function UsersTab() {
                 type="date"
                 fullWidth
                 required
-                value={userData.birthdate}
+                value={Date(userData.birthdate)}
                 onChange={handleInputChange}
                 InputLabelProps={{
                   shrink: true,
