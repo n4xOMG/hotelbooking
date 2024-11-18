@@ -1,8 +1,9 @@
 const express = require("express");
+const mongoose = require("mongoose");
+const { verifyToken } = require("../config/jwtConfig");
 const Hotel = require("../models/Hotel");
 const Room = require("../models/Room");
 const Booking = require("../models/Booking");
-const { verifyToken } = require("../config/jwtConfig");
 const { isHotelAvailable } = require("../utils/checkAvailability");
 
 const router = express.Router();
@@ -115,7 +116,7 @@ router.get("/:id", async (req, res) => {
       .populate("owner", "username avatarUrl firstname lastname email")
       .populate("propertyType", "type icon")
       .populate("categories", "name description icon")
-      .populate("rooms")
+      .populate("rooms", "size beds baths")
       .populate("amenities", "name description icon")
       .populate("ratings");
     if (!hotel) {
@@ -173,10 +174,9 @@ router.post("/", verifyToken, async (req, res) => {
       rooms.map(async (room) => {
         const newRoom = new Room({
           hotel: null, // Temporary, will set after hotel creation
-          roomNumber: room.roomNumber,
-          type: room.type,
-          price: room.price,
-          // Add other room fields as necessary
+          beds: room.beds,
+          baths: room.baths,
+          size: room.size,
         });
         await newRoom.save();
         return newRoom._id;
@@ -200,7 +200,7 @@ router.post("/", verifyToken, async (req, res) => {
       amenities,
       isAvailable,
       images,
-      owner: req.user.id, // Assuming req.user is set by verifyToken
+      owner: req.user.id,
     });
 
     await newHotel.save();
@@ -223,24 +223,86 @@ router.put("/:id", verifyToken, async (req, res) => {
     // Verify ownership
     const hotel = await Hotel.findById(hotelId);
     if (!hotel) {
-      return res.status(404).json({ message: "Hotel not found." });
+      return res.status(404).json({ message: "Hotel not found" });
     }
 
     if (hotel.owner.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Unauthorized to update this hotel." });
+      return res.status(403).json({ message: "Unauthorized" });
     }
 
-    // Update hotel details
-    const updatedHotel = await Hotel.findByIdAndUpdate(hotelId, updateData, { new: true })
+    // Handle Rooms
+    if (updateData.rooms && Array.isArray(updateData.rooms)) {
+      const updatedRoomIds = [];
+
+      for (const room of updateData.rooms) {
+        if (room._id) {
+          // Existing Room: Update its details
+          const existingRoom = await Room.findById(room._id);
+          if (existingRoom) {
+            existingRoom.size = room.size;
+            existingRoom.beds = room.beds;
+            existingRoom.baths = room.baths;
+            await existingRoom.save();
+            updatedRoomIds.push(existingRoom._id);
+          } else {
+            // Room ID provided but not found, create a new room
+            const newRoom = new Room({
+              hotel: hotelId,
+              size: room.size,
+              beds: room.beds,
+              baths: room.baths,
+            });
+            await newRoom.save();
+            updatedRoomIds.push(newRoom._id);
+          }
+        } else {
+          // New Room: Create and add to hotel
+          const newRoom = new Room({
+            hotel: hotelId,
+            size: room.size,
+            beds: room.beds,
+            baths: room.baths,
+          });
+          await newRoom.save();
+          updatedRoomIds.push(newRoom._id);
+        }
+      }
+
+      // Delete Rooms that are no longer associated with the hotel
+      const roomsToDelete = hotel.rooms.filter((roomId) => !updatedRoomIds.includes(roomId.toString()));
+      if (roomsToDelete.length > 0) {
+        await Room.deleteMany({ _id: { $in: roomsToDelete } });
+      }
+
+      // Update the hotel's rooms array
+      updateData.rooms = updatedRoomIds;
+    }
+
+    // Update totalRooms, totalBeds, totalBaths
+    if (updateData.rooms && Array.isArray(updateData.rooms)) {
+      const rooms = await Room.find({ _id: { $in: updateData.rooms } });
+      updateData.totalRooms = rooms.length;
+      updateData.totalBeds = rooms.reduce((total, room) => total + room.beds, 0);
+      updateData.totalBaths = rooms.reduce((total, room) => total + room.baths, 0);
+    }
+
+    // Update the Hotel document
+    const updatedHotel = await Hotel.findByIdAndUpdate(hotelId, updateData, {
+      new: true,
+    })
       .populate("owner", "username avatarUrl firstname lastname email")
       .populate("propertyType", "type icon")
       .populate("categories", "name description icon")
-      .populate("rooms")
+      .populate({
+        path: "rooms",
+        select: "size beds baths",
+      })
       .populate("amenities", "name description icon")
       .populate("ratings");
 
     res.status(200).json(updatedHotel);
   } catch (error) {
+    console.error("Error updating hotel:", error);
     res.status(500).json({ message: `Server error: ${error.message}` });
   }
 });

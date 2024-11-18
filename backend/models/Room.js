@@ -1,9 +1,10 @@
 const mongoose = require("mongoose");
+
 const roomSchema = new mongoose.Schema({
-  size: Number,
-  beds: Number,
-  baths: Number,
-  isAvailable: { type: Boolean, default: true },
+  hotel: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel", required: false },
+  size: { type: Number, required: true },
+  beds: { type: Number, required: true },
+  baths: { type: Number, required: true },
 });
 
 module.exports = mongoose.model("Room", roomSchema);
