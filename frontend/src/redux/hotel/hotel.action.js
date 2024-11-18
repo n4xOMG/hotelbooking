@@ -1,22 +1,27 @@
 import axios from "axios";
-import { api } from "../../api/api";
-import { API_BASE_URL } from "../../api/api";
+import { API_BASE_URL, api } from "../../api/api";
 import {
-  FETCH_HOTELS_REQUEST,
-  FETCH_HOTELS_SUCCESS,
-  FETCH_HOTELS_FAILURE,
-  FETCH_HOTEL_REQUEST,
-  FETCH_HOTEL_SUCCESS,
-  FETCH_HOTEL_FAILURE,
+  CREATE_HOTEL_FAILURE,
   CREATE_HOTEL_REQUEST,
   CREATE_HOTEL_SUCCESS,
-  CREATE_HOTEL_FAILURE,
+  DELETE_HOTEL_FAILURE,
+  DELETE_HOTEL_REQUEST,
+  DELETE_HOTEL_SUCCESS,
+  FETCH_HOTELS_BY_USER_FAILURE,
+  FETCH_HOTELS_BY_USER_REQUEST,
+  FETCH_HOTELS_BY_USER_SUCCESS,
+  FETCH_HOTELS_FAILURE,
+  FETCH_HOTELS_REQUEST,
+  FETCH_HOTELS_SUCCESS,
+  FETCH_HOTEL_FAILURE,
+  FETCH_HOTEL_REQUEST,
+  FETCH_HOTEL_SUCCESS,
+  UPDATE_HOTEL_FAILURE,
   UPDATE_HOTEL_REQUEST,
   UPDATE_HOTEL_SUCCESS,
-  UPDATE_HOTEL_FAILURE,
-  BOOK_HOTEL_REQUEST,
-  BOOK_HOTEL_SUCCESS,
-  BOOK_HOTEL_FAILURE,
+  CHECK_AVAILABILITY_FAILURE,
+  CHECK_AVAILABILITY_SUCCESS,
+  CHECK_AVAILABILITY_REQUEST,
 } from "./hotel.actionType";
 
 // Fetch all hotels
@@ -36,9 +41,23 @@ export const fetchHotelById = (id) => async (dispatch) => {
   try {
     const { data } = await axios.get(`${API_BASE_URL}/hotels/${id}`);
     console.log(data);
+
     dispatch({ type: FETCH_HOTEL_SUCCESS, payload: data });
+    return { payload: data };
   } catch (error) {
     dispatch({ type: FETCH_HOTEL_FAILURE, payload: error.message });
+  }
+};
+
+// Fetch single hotel by user id
+export const fetchHotelByUser = (id) => async (dispatch) => {
+  dispatch({ type: FETCH_HOTELS_BY_USER_REQUEST });
+  try {
+    const { data } = await api.get(`${API_BASE_URL}/hotels/user/${id}`);
+    console.log(data);
+    dispatch({ type: FETCH_HOTELS_BY_USER_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({ type: FETCH_HOTELS_BY_USER_FAILURE, payload: error.message });
   }
 };
 
@@ -63,14 +82,39 @@ export const updateHotel = (id, hotelData) => async (dispatch) => {
     dispatch({ type: UPDATE_HOTEL_FAILURE, payload: error.message });
   }
 };
-
-// Book a hotel
-export const bookHotel = (id, bookingData) => async (dispatch) => {
-  dispatch({ type: BOOK_HOTEL_REQUEST });
+// Delete an existing hotel
+export const deleteHotel = (id) => async (dispatch) => {
+  dispatch({ type: DELETE_HOTEL_REQUEST });
   try {
-    const { data } = await api.post(`${API_BASE_URL}/hotels/${id}/book`, bookingData);
-    dispatch({ type: BOOK_HOTEL_SUCCESS, payload: data });
+    const { data } = await api.delete(`${API_BASE_URL}/hotels/${id}`);
+    dispatch({ type: DELETE_HOTEL_SUCCESS, payload: id });
   } catch (error) {
-    dispatch({ type: BOOK_HOTEL_FAILURE, payload: error.message });
+    dispatch({ type: DELETE_HOTEL_FAILURE, payload: error.message });
+  }
+};
+
+// Check Availability Action
+export const checkAvailability = (hotelId, startDate, endDate) => async (dispatch) => {
+  dispatch({ type: CHECK_AVAILABILITY_REQUEST });
+  try {
+    const { data } = await axios.get(`${API_BASE_URL}/bookings/check-availability/${hotelId}`, {
+      params: { startDate, endDate },
+    });
+    dispatch({ type: CHECK_AVAILABILITY_SUCCESS, payload: data });
+    return data;
+  } catch (error) {
+    dispatch({ type: CHECK_AVAILABILITY_FAILURE, payload: error.message });
+    throw error;
+  }
+};
+
+// Fetch Available Hotels
+export const fetchAvailableHotels = () => async (dispatch) => {
+  dispatch({ type: FETCH_HOTELS_REQUEST });
+  try {
+    const { data } = await axios.get(`${API_BASE_URL}/hotels/available`);
+    dispatch({ type: FETCH_HOTELS_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({ type: FETCH_HOTELS_FAILURE, payload: error.message });
   }
 };

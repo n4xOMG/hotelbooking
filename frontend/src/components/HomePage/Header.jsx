@@ -1,10 +1,10 @@
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MountainIcon from "@mui/icons-material/Terrain";
-import { Box, IconButton, Link, Menu, MenuItem, Typography } from "@mui/material";
+import { Avatar, Box, IconButton, Link, Menu, MenuItem, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logoutAction } from "../../redux/auth/auth.action";
+import { getOptimizedImageUrl } from "../../utils/optimizeImages";
 
 export default function Header() {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -62,7 +62,7 @@ export default function Header() {
         alignItems: "center",
       }}
     >
-      <Link href="#" sx={linkStyles}>
+      <Link href="/" sx={linkStyles}>
         <MountainIcon sx={{ height: 24, width: 24 }} />
         <Typography>Acme Hotels</Typography>
       </Link>
@@ -75,7 +75,11 @@ export default function Header() {
         ))}
 
         <IconButton onClick={handleMenuOpen} sx={{ color: "inherit" }}>
-          <AccountCircleIcon sx={{ width: 20, height: 20 }} />
+          {user ? (
+            <Avatar src={getOptimizedImageUrl(user?.avatarUrl)} sx={{ width: 30, height: 30, mr: 2 }} />
+          ) : (
+            <Avatar>{user?.username[0]}</Avatar>
+          )}
         </IconButton>
 
         {/* Dropdown Menu */}
@@ -90,14 +94,14 @@ export default function Header() {
                 <MenuItem key="profile" divider onClick={() => navigate("/profile")}>
                   Profile
                 </MenuItem>,
-                <MenuItem key="messages" onClick={() => navigate("/message")}>
+                <MenuItem key="messages" onClick={() => navigate("/messages")}>
                   Your Messages
-                </MenuItem>,
-                <MenuItem key="bookings" onClick={handleMenuClose}>
-                  Bookings
                 </MenuItem>,
                 <MenuItem key="list-properties" onClick={() => navigate("/list-properties")}>
                   List your properties
+                </MenuItem>,
+                <MenuItem key="manage-hotels" onClick={() => navigate("/hotels/manage-hotels")}>
+                  Manage your hotels
                 </MenuItem>,
                 user.role === "admin" && (
                   <MenuItem key="admin" onClick={() => navigate("/admin")}>

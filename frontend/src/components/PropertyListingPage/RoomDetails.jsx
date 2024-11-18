@@ -1,16 +1,28 @@
 import React from "react";
-import { Box, Typography, TextField, Button } from "@mui/material";
+import { Box, Typography, TextField, Button, FormControlLabel, Switch } from "@mui/material";
 
 export default function RoomDetails({ roomDetails, setRoomDetails }) {
   const handleChange = (index, e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     const updatedRooms = [...roomDetails];
-    updatedRooms[index] = { ...updatedRooms[index], [name]: value };
+
+    if (type === "checkbox") {
+      updatedRooms[index] = {
+        ...updatedRooms[index],
+        [name]: checked,
+      };
+    } else {
+      updatedRooms[index] = {
+        ...updatedRooms[index],
+        [name]: type === "number" ? Number(value) : value,
+      };
+    }
+
     setRoomDetails(updatedRooms);
   };
 
   const handleAddRoom = () => {
-    setRoomDetails([...roomDetails, { roomType: "", size: "", beds: 0, baths: 0, price: 0, isAvailable: true }]);
+    setRoomDetails([...roomDetails, { size: "", beds: 0, baths: 0, price: 0, isAvailable: true }]);
   };
 
   return (
@@ -21,14 +33,9 @@ export default function RoomDetails({ roomDetails, setRoomDetails }) {
 
       {roomDetails.map((room, index) => (
         <Box key={index} sx={{ mb: 2 }}>
-          <TextField
-            fullWidth
-            label="Room Type"
-            name="roomType"
-            value={room.roomType}
-            onChange={(e) => handleChange(index, e)}
-            sx={{ mb: 2 }}
-          />
+          <Typography variant="h7" sx={{ fontWeight: "bold", mb: 2 }}>
+            Room {index + 1}
+          </Typography>
           <TextField fullWidth label="Room Size" name="size" value={room.size} onChange={(e) => handleChange(index, e)} sx={{ mb: 2 }} />
           <TextField
             fullWidth
@@ -46,6 +53,11 @@ export default function RoomDetails({ roomDetails, setRoomDetails }) {
             type="number"
             value={room.baths}
             onChange={(e) => handleChange(index, e)}
+            sx={{ mb: 2 }}
+          />
+          <FormControlLabel
+            control={<Switch name="isAvailable" checked={room.isAvailable} onChange={(e) => handleChange(index, e)} />}
+            label="Available for Booking"
             sx={{ mb: 2 }}
           />
         </Box>

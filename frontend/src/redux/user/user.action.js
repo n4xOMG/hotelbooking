@@ -8,13 +8,6 @@ import {
   GET_PROFILE_FAILED,
   UPDATE_PROFILE_REQUEST,
   UPDATE_PROFILE_SUCCESS,
-  UPDATE_PROFILE_FAILED,
-  FETCH_USER_REQUEST,
-  FETCH_USER_SUCCESS,
-  FETCH_USER_FAILURE,
-  UPDATE_USER_REQUEST,
-  UPDATE_USER_SUCCESS,
-  UPDATE_USER_FAILED,
 } from "./user.actionType";
 
 
@@ -48,6 +41,26 @@ export const updateUserProfile = (reqData) => async (dispatch) => {
   } catch (error) {
     console.log("Api error: ", error.message);
     dispatch({ type: UPDATE_PROFILE_FAILED, payload: error.message });
+  }
+};
+
+export const sendEmailVerificationLink = (newEmail) => async (dispatch) => {
+  try {
+    await api.post(`${API_BASE_URL}/user/send-verification-email`, { newEmail });
+  } catch (error) {
+    console.log("Api error: ", error.message);
+  }
+};
+
+export const verifyEmailLink = (token, email) => async (dispatch) => {
+  dispatch({ type: VERIFY_EMAIL_REQUEST });
+  try {
+    const { data } = await api.post(`${API_BASE_URL}/user/verify-email`, { token, email });
+    dispatch({ type: VERIFY_EMAIL_SUCCESS, payload: data });
+    return { payload: data };
+  } catch (error) {
+    console.log("Api error: ", error.message);
+    dispatch({ type: VERIFY_EMAIL_FAILED, payload: error.message });
   }
 };
 

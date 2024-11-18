@@ -19,6 +19,7 @@ import Typography from "@mui/material/Typography";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { registerUserAction } from "../../redux/auth/auth.action";
+import UploadToCloudinary from "../../utils/uploadToCloudinary";
 
 export default function SignUp() {
   const dispatch = useDispatch();
@@ -34,6 +35,7 @@ export default function SignUp() {
     birthdate: "",
     email: "",
     password: "",
+    avatarUrl: "",
   });
   const [passwordsMatch, setPasswordsMatch] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -47,6 +49,12 @@ export default function SignUp() {
     number: false,
     special: false,
   });
+  const [avatar, setAvatar] = useState({
+    file: "",
+    url: "",
+    error: "",
+  });
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setRegisterData((prev) => ({
@@ -54,7 +62,14 @@ export default function SignUp() {
       [name]: value,
     }));
   };
-
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.size <= 2 * 1024 * 1024) {
+      setAvatar({ error: "", file: file, url: URL.createObjectURL(file) });
+    } else {
+      setAvatar({ ...avatar, error: "Image size should not exceed 2 MB." });
+    }
+  };
   const calculatePasswordStrength = (password) => {
     let score = 0;
     if (password.length > 8) score++;
@@ -111,7 +126,15 @@ export default function SignUp() {
       setError("Password is not strong enough");
     } else {
       try {
-        await dispatch(registerUserAction({ data: registerData }));
+        let avatarUrl = "";
+        if (avatar.file) {
+          avatarUrl = await UploadToCloudinary(avatar.file, "user_avatar");
+        }
+        const formData = {
+          ...registerData,
+          avatarUrl,
+        };
+        await dispatch(registerUserAction({ data: formData }));
       } catch (e) {
         console.error("Error signing up", e);
         setError("Error signing up: ", e);
@@ -216,6 +239,20 @@ export default function SignUp() {
                 <MenuItem value="Female">Female</MenuItem>
                 <MenuItem value="Other">Other</MenuItem>
               </Select>
+              <Box>
+                <input accept="image/*" type="file" id="avatar" onChange={handleAvatarChange} style={{ display: "none" }} />
+                <label htmlFor="avatar">
+                  <Button variant="outlined" component="span" fullWidth>
+                    Upload Avatar
+                  </Button>
+                </label>
+                {avatar.file && <img src={avatar.url} alt="Avatar Preview" style={{ width: "100%", height: "auto", marginTop: 8 }} />}
+                {avatar.error && (
+                  <Typography variant="body2" color="error">
+                    {avatar.error}
+                  </Typography>
+                )}
+              </Box>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <TextField
                   id="password"

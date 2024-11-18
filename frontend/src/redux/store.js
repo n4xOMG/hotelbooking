@@ -7,13 +7,22 @@ import categoryReducer from "./category/category.reducer";
 import propertyTypeReducer from "./propertyType/propertyType.reducer";
 import amenityReducer from "./amenity/amenity.reducer";
 import hotelReducer from "./hotel/hotel.reducer";
+
 import { reportReducer } from "./report/report.reducer";
+
+import bookingReducer from "./booking/booking.reducer";
+import ratingReducer from "./rating/rating.reducer";
+import chatReducer from "./chat/chat.reducer";
+
 
 const rootReducers = combineReducers({
   auth: authReducer,
   user: userReducer,
   hotel: hotelReducer,
+  booking: bookingReducer,
   payment: paymentReducer,
+  chat: chatReducer,
+  rating: ratingReducer,
   category: categoryReducer,
   propertyType: propertyTypeReducer,
   amenity: amenityReducer,
