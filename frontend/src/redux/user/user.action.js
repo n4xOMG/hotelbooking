@@ -17,60 +17,37 @@ import {
   UPDATE_USER_FAILED,
 } from "./user.actionType";
 
-// Helper function to get the JWT token from localStorage
-const getAuthToken = () => {
-  return localStorage.getItem("token");
-};
 
-// Get Current User Profile by JWT
-export const getCurrentUserByJwt = () => async (dispatch) => {
+export const getCurrentUserByJwt = (jwt) => async (dispatch) => {
   dispatch({ type: GET_PROFILE_REQUEST });
   try {
-    const response = await axios.get(`${API_BASE_URL}/user/profile`, {
+    const { data } = await axios.get(`${API_BASE_URL}/user/profile`, {
       headers: {
-        Authorization: `Bearer ${getAuthToken()}`,
+        Authorization: `Bearer ${jwt}`,
       },
     });
-    dispatch({ type: GET_PROFILE_SUCCESS, payload: response.data });
-    return { payload: response.data };
+
+    dispatch({ type: GET_PROFILE_SUCCESS, payload: data });
+    return { payload: data };
   } catch (error) {
     if (error.response && error.response.status === 401) {
-      dispatch({
-        type: GET_PROFILE_FAILED,
-        payload: "Session expired. Please sign in again.",
-      });
+      dispatch({ type: GET_PROFILE_FAILED, payload: "Session expired. Please sign in again." });
       return { error: "UNAUTHORIZED" };
     }
-    dispatch({
-      type: GET_PROFILE_FAILED,
-      payload: error.response?.data?.message || error.message,
-    });
-    return { error: error.message };
+    dispatch({ type: GET_PROFILE_FAILED, payload: error.message });
   }
 };
 
-// Update Current User Profile
 export const updateUserProfile = (reqData) => async (dispatch) => {
   dispatch({ type: UPDATE_PROFILE_REQUEST });
   try {
-    const response = await axios.put(
-      `${API_BASE_URL}/user/profile`,
-      reqData,
-      {
-        headers: {
-          Authorization: `Bearer ${getAuthToken()}`,
-        },
-      }
-    );
-    dispatch({ type: UPDATE_PROFILE_SUCCESS, payload: response.data });
-    return { payload: response.data };
+    const { data } = await api.put(`${API_BASE_URL}/user/profile`, reqData);
+
+    dispatch({ type: UPDATE_PROFILE_SUCCESS, payload: data });
+    return { payload: data };
   } catch (error) {
-    console.error("API Error:", error.message);
-    dispatch({
-      type: UPDATE_PROFILE_FAILED,
-      payload: error.response?.data?.message || error.message,
-    });
-    return { error: error.message };
+    console.log("Api error: ", error.message);
+    dispatch({ type: UPDATE_PROFILE_FAILED, payload: error.message });
   }
 };
 
