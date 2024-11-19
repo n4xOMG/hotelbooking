@@ -5,6 +5,7 @@ import BedDoubleIcon from "@mui/icons-material/KingBed";
 import AlertCircleIcon from "@mui/icons-material/Report";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts"
+import { RateReview } from "@mui/icons-material";
 import { Box, Drawer, Button, IconButton, Tab, Tabs, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +14,7 @@ import PropertyTypesTab from "../../components/AdminPage/PropertyTypesTab";
 import AmenitiesTab from "../../components/AdminPage/AmenitiesTab";
 import UsersTab from "../../components/AdminPage/UsersTab";
 import ReportsTab from "../../components/AdminPage/ReportsTab";
+import RatingTab from "../../components/AdminPage/RatingTab";
 export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("categories");
@@ -22,9 +24,10 @@ export default function AdminPage() {
   const tabs = [
     { name: "Categories", icon: <GridIcon />, id: "categories" },
     { name: "Property Types", icon: <HomeIcon />, id: "propertyTypes" },
-    { name: "Reports", icon: <AlertCircleIcon />, id: "reports" },
     { name: "Amenities", icon: <BedDoubleIcon />, id: "amenities" },
-    { name: "Users", icon: <ManageAccountsIcon />, id: "users" },
+    { name: "Users", icon: <ManageAccountsIcon />, id: "users" }, 
+    { name: "Ratings", icon: <RateReview />, id: "ratings" },
+    { name: "Reports", icon: <AlertCircleIcon />, id: "reports" },
   ];
 
   return (
@@ -111,9 +114,10 @@ export default function AdminPage() {
         <Box sx={{ py: 2 }}>
           {activeTab === "categories" && <CategoriesTab />}
           {activeTab === "propertyTypes" && <PropertyTypesTab />}
-          {activeTab === "reports" && <ReportsTab />}
           {activeTab === "amenities" && <AmenitiesTab />}
-          {activeTab === "users" && <UsersTab />}
+          {activeTab === "users" && <UsersTab />} 
+          {activeTab === "ratings" && <RatingTab />}
+          {activeTab === "reports" && <ReportsTab />}    
         </Box>
       </Box>
     </Box>

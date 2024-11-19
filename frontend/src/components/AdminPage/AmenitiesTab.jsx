@@ -18,9 +18,10 @@ import {
   TableHead,
   TableRow,
   TextField,
+  InputAdornment,
   CircularProgress,
 } from "@mui/material";
-import { Delete, Edit, MoreHoriz } from "@mui/icons-material";
+import { Delete, Edit, MoreHoriz, Search } from "@mui/icons-material";
 import * as Icons from "@mui/icons-material";
 import { FixedSizeList as List } from "react-window";
 import { useDispatch, useSelector } from "react-redux";
@@ -44,11 +45,21 @@ const AmenitiesTab = () => {
   const [anchorEls, setAnchorEls] = useState({});
   const [amenityData, setAmenityData] = useState({ name: "", description: "", icon: "" });
   const [openDialog, setOpenDialog] = useState(false);
+  const [iconSearch, setIconSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const iconOptions = Object.keys(Icons).map((icon) => ({
     label: icon,
     value: icon,
   }));
+
+  const filteredIcons = iconOptions.filter((icon) =>
+    icon.label.toLowerCase().includes(iconSearch.toLowerCase())
+  );
+
+  const filteredAmenities = amenities.filter((amenity) =>
+    amenity.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     dispatch(fetchAmenities());
@@ -68,6 +79,7 @@ const AmenitiesTab = () => {
   const handleDialogClose = () => {
     setOpenDialog(false);
     setAmenityData({ name: "", description: "", icon: "" });
+    setIconSearch("");
   };
 
   const handleInputChange = (event) => {
@@ -107,13 +119,26 @@ const AmenitiesTab = () => {
     handleIconClose();
   };
 
-  if (loading) return <CircularProgress />;
-
   return (
     <Box sx={{ p: 2 }}>
-      <Button variant="contained" color="primary" onClick={() => handleDialogOpen()}>
-        Add Amenity
-      </Button>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+        <TextField
+          variant="outlined"
+          placeholder="Search amenities..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search />
+              </InputAdornment>
+            ),
+          }}
+        />
+        <Button variant="contained" color="primary" onClick={() => handleDialogOpen()}>
+          Add Amenity
+        </Button>
+      </Box>
       <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>
@@ -125,38 +150,33 @@ const AmenitiesTab = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {amenities.map((amenity) => {
-              const icon =
-                amenity.icon && Icons[amenity.icon]
-                  ? Icons[amenity.icon]
-                  : Icons.HelpOutline;
-
-              return (
-                <TableRow key={amenity._id}>
-                  <TableCell>{amenity.name}</TableCell>
-                  <TableCell>{amenity.description}</TableCell>
-                  <TableCell>{React.createElement(icon)}</TableCell>
-                  <TableCell>
-                    <IconButton onClick={() => handleDialogOpen(amenity)}>
-                      <Edit fontSize="small" />
-                    </IconButton>
-                    <IconButton onClick={(e) => handleMenuOpen(e, amenity)}>
-                      <MoreHoriz fontSize="small" />
-                    </IconButton>
-                    <Menu
-                      anchorEl={anchorEls[amenity._id]}
-                      open={Boolean(anchorEls[amenity._id])}
-                      onClose={() => handleMenuClose(amenity._id)}
-                    >
-                      <MenuItem onClick={() => handleDeleteAmenity(amenity._id)}>
-                        <Delete fontSize="small" sx={{ mr: 1 }} />
-                        Delete
-                      </MenuItem>
-                    </Menu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {filteredAmenities.map((amenity) => (
+              <TableRow key={amenity._id}>
+                <TableCell>{amenity.name}</TableCell>
+                <TableCell>{amenity.description}</TableCell>
+                <TableCell>
+                  {React.createElement(Icons[amenity.icon] || Icons.HelpOutline)}
+                </TableCell>
+                <TableCell>
+                  <IconButton onClick={() => handleDialogOpen(amenity)}>
+                    <Edit fontSize="small" />
+                  </IconButton>
+                  <IconButton onClick={(e) => handleMenuOpen(e, amenity)}>
+                    <MoreHoriz fontSize="small" />
+                  </IconButton>
+                  <Menu
+                    anchorEl={anchorEls[amenity._id]}
+                    open={Boolean(anchorEls[amenity._id])}
+                    onClose={() => handleMenuClose(amenity._id)}
+                  >
+                    <MenuItem onClick={() => handleDeleteAmenity(amenity._id)}>
+                      <Delete fontSize="small" sx={{ mr: 1 }} />
+                      Delete
+                    </MenuItem>
+                  </Menu>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
@@ -193,7 +213,6 @@ const AmenitiesTab = () => {
             label="Icon"
             type="text"
             fullWidth
-            required
             value={amenityData.icon}
             onClick={handleIconClick}
             InputProps={{
@@ -209,18 +228,28 @@ const AmenitiesTab = () => {
               horizontal: "left",
             }}
           >
+            <Box sx={{ p: 1 }}>
+              <TextField
+                placeholder="Search icon..."
+                fullWidth
+                variant="outlined"
+                size="small"
+                value={iconSearch}
+                onChange={(e) => setIconSearch(e.target.value)}
+              />
+            </Box>
             <List
               height={300}
-              itemCount={iconOptions.length}
+              itemCount={filteredIcons.length}
               itemSize={50}
               width={300}
-              itemData={iconOptions}
+              itemData={filteredIcons}
             >
               {({ index, style }) => (
                 <IconMenuItem
                   index={index}
                   style={style}
-                  data={iconOptions}
+                  data={filteredIcons}
                   onSelect={handleIconSelect}
                 />
               )}

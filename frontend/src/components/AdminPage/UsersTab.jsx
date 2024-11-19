@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useMemo } from "react";
+// UsersTab.jsx
+
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
@@ -29,6 +31,7 @@ import LoadingSpinner from "../LoadingSpinner";
 export default function UsersTab() {
   const dispatch = useDispatch();
   const { users, loading } = useSelector((state) => state.user);
+  
   const [openDialog, setOpenDialog] = useState(false);
   const [userData, setUserData] = useState({
     firstname: "",
@@ -37,30 +40,30 @@ export default function UsersTab() {
     phoneNumber: "",
     email: "",
     role: "",
-    gender: "",
-    birthdate: "",
+    gender: "", // Added gender field
+    birthday: "", // Added birthday field
+    avatarUrl: "",
   });
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
 
   useEffect(() => {
-    dispatch(fetchUsers());
-  }, [dispatch]);
+    const query = {};
+    if (searchQuery) {
+      query.search = searchQuery;
+    }
+    if (roleFilter) {
+      query.role = roleFilter;
+    }
 
-  const filteredUsers = useMemo(() => {
-    return Array.isArray(users)
-      ? users.filter(
-          (user) =>
-            (user.firstname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              user.lastname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              user.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
-            (roleFilter === "" || user.role === roleFilter)
-        )
-      : [];
-  }, [users, searchQuery, roleFilter]);
+    const queryString = new URLSearchParams(query).toString();
+    dispatch(fetchUsers(queryString));
+  }, [dispatch, searchQuery, roleFilter]);
 
-  const handleDialogOpen = (user = { firstname: "", lastname: "", username: "", phoneNumber: "", email: "", role: "", gender: "", birthdate: "" }) => {
+  const handleDialogOpen = (user = {
+    firstname: "", lastname: "", username: "", phoneNumber: "", email: "", role: "", gender: "", birthday: "", avatarUrl: ""
+  }) => {
     setUserData(user);
     setOpenDialog(true);
   };
@@ -75,7 +78,8 @@ export default function UsersTab() {
       email: "",
       role: "",
       gender: "",
-      birthdate: "",
+      birthday: "",
+      avatarUrl: "",
     });
   };
 
@@ -85,14 +89,22 @@ export default function UsersTab() {
   };
 
   const handleSaveUser = () => {
-    if (!userData.firstname || !userData.lastname || !userData.username || !userData.email || !userData.role) {
+    const { firstname, lastname, username, phoneNumber, email, role, gender, birthday } = userData;
+    if (!firstname || !lastname || !username || !phoneNumber || !email || !role || !gender || !birthday) {
       alert("Please fill in all required fields.");
       return;
     }
+
     if (userData._id) {
       dispatch(updateUser(userData._id, userData));
     }
+
     handleDialogClose();
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setRoleFilter("");
   };
 
   return (
@@ -114,8 +126,9 @@ export default function UsersTab() {
                   </InputAdornment>
                 ),
               }}
+              sx={{ flex: 1, mr: 2 }}
             />
-            <FormControl variant="outlined" sx={{ minWidth: 200 }}>
+            <FormControl variant="outlined" sx={{ minWidth: 200, mr: 2 }}>
               <InputLabel>Role</InputLabel>
               <Select
                 value={roleFilter}
@@ -130,10 +143,11 @@ export default function UsersTab() {
                 <MenuItem value="hotelOwner">Hotel Owner</MenuItem>
               </Select>
             </FormControl>
-            <Button variant="outlined" onClick={() => { setSearchQuery(""); setRoleFilter(""); }}>
+            <Button variant="outlined" onClick={handleClearFilters}>
               Clear Filters
             </Button>
           </Box>
+
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
@@ -142,37 +156,40 @@ export default function UsersTab() {
                   <TableCell>Phone</TableCell>
                   <TableCell>Email</TableCell>
                   <TableCell>Role</TableCell>
+                  <TableCell>Gender</TableCell> {/* Added Gender Column */}
+                  <TableCell>Birthday</TableCell> {/* Added Birthday Column */}
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
-              {filteredUsers.length === 0 ? (
-                <TableBody>
+              <TableBody>
+                {users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
+                    <TableCell colSpan={7} align="center">
                       No users found matching your search/filter criteria.
                     </TableCell>
                   </TableRow>
-                </TableBody>
-              ) : (
-                <TableBody>
-                  {filteredUsers.map((user) => (
+                ) : (
+                  users.map((user) => (
                     <TableRow key={user._id}>
                       <TableCell>{user.username}</TableCell>
                       <TableCell>{user.phoneNumber}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.role}</TableCell>
+                      <TableCell>{user.gender}</TableCell> {/* Display Gender */}
+                      <TableCell>{new Date(user.birthday).toLocaleDateString()}</TableCell> {/* Display Birthday */}
                       <TableCell>
                         <IconButton onClick={() => handleDialogOpen(user)}>
                           <Edit fontSize="small" />
                         </IconButton>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              )}
+                  ))
+                )}
+              </TableBody>
             </Table>
           </TableContainer>
 
+          {/* Edit/Add User Dialog */}
           <Dialog open={openDialog} onClose={handleDialogClose}>
             <DialogTitle>{userData._id ? "Edit User" : "Add User"}</DialogTitle>
             <DialogContent>
@@ -227,7 +244,7 @@ export default function UsersTab() {
                 value={userData.email}
                 onChange={handleInputChange}
               />
-              <FormControl margin="dense" fullWidth>
+              <FormControl margin="dense" fullWidth required>
                 <InputLabel>Role</InputLabel>
                 <Select
                   name="role"
@@ -240,28 +257,43 @@ export default function UsersTab() {
                   <MenuItem value="hotelOwner">Hotel Owner</MenuItem>
                 </Select>
               </FormControl>
+              <FormControl margin="dense" fullWidth required>
+                <InputLabel>Gender</InputLabel>
+                <Select
+                  name="gender"
+                  value={userData.gender}
+                  onChange={handleInputChange}
+                  label="Gender"
+                >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
+                </Select>
+              </FormControl>
               <TextField
                 margin="dense"
-                name="gender"
-                label="Gender"
-                type="text"
+                name="birthday"
+                label="Birthday"
+                type="date"
                 fullWidth
                 required
-                value={userData.gender}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                value={userData.birthday ? userData.birthday.split('T')[0] : ""}
                 onChange={handleInputChange}
               />
               <TextField
                 margin="dense"
-                name="birthdate"
-                label="Birthdate"
-                type="date"
+                name="avatarUrl"
+                label="Avatar URL"
+                type="url"
                 fullWidth
-                required
-                value={Date(userData.birthdate)}
+                value={userData.avatarUrl || ""}
                 onChange={handleInputChange}
-                InputLabelProps={{
-                  shrink: true,
-                }}
               />
             </DialogContent>
             <DialogActions>

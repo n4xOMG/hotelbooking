@@ -22,6 +22,7 @@ import {
   FETCH_RATINGS_BY_HOTEL_REQUEST,
   FETCH_RATINGS_BY_HOTEL_SUCCESS,
   FETCH_RATINGS_BY_HOTEL_FAILURE,
+
 } from "./rating.actionType";
 
 // Create a new rating
@@ -57,6 +58,7 @@ export const getAllRatings = () => async (dispatch) => {
     dispatch({ type: GET_ALL_RATINGS_FAILURE, payload: error.message });
   }
 };
+
 
 // Get a specific rating by ID
 export const getRatingById = (id) => async (dispatch) => {

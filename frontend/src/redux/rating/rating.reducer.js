@@ -20,6 +20,7 @@ import {
   FETCH_RATINGS_BY_HOTEL_REQUEST,
   FETCH_RATINGS_BY_HOTEL_SUCCESS,
   FETCH_RATINGS_BY_HOTEL_FAILURE,
+  
 } from "./rating.actionType";
 
 const initialState = {
@@ -40,6 +41,7 @@ const ratingReducer = (state = initialState, action) => {
     case UPDATE_RATING_REQUEST:
     case DELETE_RATING_REQUEST:
     case FETCH_RATINGS_BY_HOTEL_REQUEST:
+
       return {
         ...state,
         loading: true,
