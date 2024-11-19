@@ -21,7 +21,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import { Edit, Delete, Visibility, Reply } from "@mui/icons-material";
+import { Edit, Delete, Visibility, Report } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import {
   getAllRatings,
