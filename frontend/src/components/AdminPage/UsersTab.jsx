@@ -41,7 +41,7 @@ export default function UsersTab() {
     email: "",
     role: "",
     gender: "", // Added gender field
-    birthday: "", // Added birthday field
+    birthdate: "", // Added birthday field
     avatarUrl: "",
   });
   
@@ -62,7 +62,7 @@ export default function UsersTab() {
   }, [dispatch, searchQuery, roleFilter]);
 
   const handleDialogOpen = (user = {
-    firstname: "", lastname: "", username: "", phoneNumber: "", email: "", role: "", gender: "", birthday: "", avatarUrl: ""
+    firstname: "", lastname: "", username: "", phoneNumber: "", email: "", role: "", gender: "", birthdate: "", avatarUrl: ""
   }) => {
     setUserData(user);
     setOpenDialog(true);
@@ -78,7 +78,7 @@ export default function UsersTab() {
       email: "",
       role: "",
       gender: "",
-      birthday: "",
+      birthdate: "",
       avatarUrl: "",
     });
   };
@@ -89,8 +89,8 @@ export default function UsersTab() {
   };
 
   const handleSaveUser = () => {
-    const { firstname, lastname, username, phoneNumber, email, role, gender, birthday } = userData;
-    if (!firstname || !lastname || !username || !phoneNumber || !email || !role || !gender || !birthday) {
+    const { firstname, lastname, username, phoneNumber, email, role, gender, birthdate } = userData;
+    if (!firstname || !lastname || !username || !phoneNumber || !email || !role || !gender || !birthdate) {
       alert("Please fill in all required fields.");
       return;
     }
@@ -156,8 +156,6 @@ export default function UsersTab() {
                   <TableCell>Phone</TableCell>
                   <TableCell>Email</TableCell>
                   <TableCell>Role</TableCell>
-                  <TableCell>Gender</TableCell> {/* Added Gender Column */}
-                  <TableCell>Birthday</TableCell> {/* Added Birthday Column */}
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -175,8 +173,6 @@ export default function UsersTab() {
                       <TableCell>{user.phoneNumber}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.role}</TableCell>
-                      <TableCell>{user.gender}</TableCell> {/* Display Gender */}
-                      <TableCell>{new Date(user.birthday).toLocaleDateString()}</TableCell> {/* Display Birthday */}
                       <TableCell>
                         <IconButton onClick={() => handleDialogOpen(user)}>
                           <Edit fontSize="small" />
@@ -283,7 +279,7 @@ export default function UsersTab() {
                 InputLabelProps={{
                   shrink: true,
                 }}
-                value={userData.birthday ? userData.birthday.split('T')[0] : ""}
+                value={userData.birthdate ? userData.birthdate.split('T')[0] : ""}
                 onChange={handleInputChange}
               />
               <TextField

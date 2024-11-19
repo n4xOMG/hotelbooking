@@ -1,5 +1,3 @@
-// RatingTab.jsx
-
 import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -29,6 +27,8 @@ import {
   getAllRatings,
   updateRating,
   deleteRating,
+  createRating, // You need an action for creating a rating
+
 } from "../../redux/rating/rating.action";
 import LoadingSpinner from "../LoadingSpinner";
 
@@ -64,8 +64,8 @@ export default function RatingTab() {
     });
   }, [ratings, searchQuery, starFilter, dateFilter]);
 
-  const handleView = (id) => {
-    navigate(`/ratings/${id}`);
+  const handleView = (hotelId) => {
+    navigate(`/hotels/${hotelId}`);
   };
 
   const handleHide = (rating) => {
@@ -75,7 +75,8 @@ export default function RatingTab() {
 
   const handleReply = (rating) => {
     setSelectedRating(rating);
-    setOpenReplyDialog(true);
+    setReplyContent(""); // Reset reply content
+    setOpenReplyDialog(true); // Open the reply dialog
   };
 
   const handleDelete = (id) => {
@@ -83,10 +84,21 @@ export default function RatingTab() {
   };
 
   const handleReplySubmit = () => {
-    // Implement reply logic here
-    // For example, dispatch an action to add a reply to the rating
+    // Create a new rating for the reply
+    if (replyContent.trim()) {
+      const replyData = {
+        ratingId: selectedRating._id,
+        comment: replyContent,
+        value: 0, // Set stars to 0 or leave it empty for replies
+        user: {
+          username: "Admin", // Or use current logged in user's info
+        },
+      };
+
+      dispatch(createRating(replyData)); // Dispatch an action to create the reply as a new rating
+    }
     setOpenReplyDialog(false);
-    setReplyContent("");
+    setReplyContent(""); // Reset after submit
   };
 
   return (
@@ -170,21 +182,21 @@ export default function RatingTab() {
               ) : (
                 filteredRatings.map((rating) => (
                   <TableRow key={rating._id} sx={{ opacity: rating.hidden ? 0.5 : 1 }}>
-                    <TableCell>{rating.user?.name || "Unknown User"}</TableCell>
-                    <TableCell>{rating.stars}</TableCell>
+                    <TableCell>{rating.user?.username || "Unknown User"}</TableCell>
+                    <TableCell>{rating.value}</TableCell>
                     <TableCell>{rating.comment}</TableCell>
                     <TableCell>
                       {new Date(rating.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <IconButton onClick={() => handleView(rating._id)}>
+                      <IconButton onClick={() => handleView(rating.hotel)}>
                         <Visibility />
                       </IconButton>
                       <IconButton onClick={() => handleHide(rating)}>
                         <Delete />
                       </IconButton>
                       <IconButton onClick={() => handleReply(rating)}>
-                        <Reply />
+                        <Report />
                       </IconButton>
                     </TableCell>
                   </TableRow>
