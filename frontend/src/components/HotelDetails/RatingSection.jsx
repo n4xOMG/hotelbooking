@@ -12,6 +12,14 @@ import {
   Divider,
   Button,
   Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Snackbar,
+  Alert
+
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchRatingsByHotel } from "../../redux/rating/rating.action";
@@ -20,6 +28,7 @@ import { formatDate } from "../../utils/formatDate";
 import ViewImageModal from "./ViewImageModal";
 import { Reply, Report } from "@mui/icons-material";
 import { getCurrentUserByJwt } from "../../redux/user/user.action";
+import { createReport } from "../../redux/report/report.action";
 
 const RatingSection = ({ hotelId }) => {
   const dispatch = useDispatch();
@@ -30,13 +39,15 @@ const RatingSection = ({ hotelId }) => {
   const { user, loading: userLoading, error: userError } = useSelector(
     (state) => state.user
   );
-  
+
+  const [openDialog, setOpenDialog] = useState(false);
+  const [reason, setReason] = useState("");
+  const [currentRatingId, setCurrentRatingId] = useState(null);
+
   useEffect(() => {
     const fetchRatings = async () => {
-      // Retrieve JWT from localStorage or any other secure storage
       const jwt = localStorage.getItem("token");
       if (jwt) {
-        // Dispatch action to fetch current user profile
         await dispatch(getCurrentUserByJwt(jwt));
       } else {
         console.warn("JWT token not found. User might not be authenticated.");
@@ -46,6 +57,13 @@ const RatingSection = ({ hotelId }) => {
     fetchRatings();
     dispatch(getCurrentUserByJwt());
   }, [dispatch, hotelId]);
+
+   // Snackbar State
+   const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   const handleOpenModal = (images, index) => {
     setCurrentImages(images);
@@ -70,24 +88,75 @@ const RatingSection = ({ hotelId }) => {
     );
   };
 
-  const handleReport = (ratingId) => {
-    console.log(`Report rating with ID: ${ratingId}`);
-    // Add your reporting logic here.
+  const handleOpenDialog = (ratingId) => {
+    setCurrentRatingId(ratingId);
+    setOpenDialog(true);
   };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setReason("");
+    setCurrentRatingId(null);
+  };
+
+  const handleSubmitReport = () => {
+    if (reason.trim() !== "") {
+      const reportData = {
+        reportedBy: user.username,
+        type: "Comment",
+        itemId: currentRatingId,
+        reason,
+      };
+      dispatch(createReport(reportData))
+      .then(() => {
+        setSnackbar({
+          open: true,
+          message: "Report created successfully.",
+          severity: "success",
+        });
+      })
+      .catch(() => {
+        setSnackbar({
+          open: true,
+          message: "Failed to create report.",
+          severity: "error",
+        });
+      });
+      handleCloseDialog();
+    }
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
 
   const handleReply = (ratingId) => {
     console.log(`Reply to rating with ID: ${ratingId}`);
-    // Add your reply logic here.
   };
 
-
   const isAdmin = user?.role === "admin";
-  
+
   return (
     <Box sx={{ mt: 4 }}>
       <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
         Ratings & Reviews
       </Typography>
+      {/* Snackbar for Notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
       {loading ? (
         <LoadingSpinner />
       ) : ratingsByHotel.length === 0 ? (
@@ -139,19 +208,19 @@ const RatingSection = ({ hotelId }) => {
                   )}
                   <Box display="flex" justifyContent="flex-end" sx={{ mt: 2 }}>
                     <Stack direction="row" spacing={1}>
-                      <Button
+                      {/* <Button
                         variant="contained"
                         color="primary"
                         onClick={() => handleReply(rating._id)}
                         startIcon={<Reply />}
                       >
                         Reply
-                      </Button>
+                      </Button> */}
                       {isAdmin && (
                         <Button
                           variant="contained"
                           color="error"
-                          onClick={() => handleReport(rating._id)}
+                          onClick={() => handleOpenDialog(rating._id)}
                           startIcon={<Report />}
                         >
                           Report
@@ -172,6 +241,40 @@ const RatingSection = ({ hotelId }) => {
         onNext={handleNextImage}
         onPrev={handlePrevImage}
       />
+
+      {/* Report Reason Dialog */}
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Report Rating</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" gutterBottom>
+            Please provide a reason for reporting this rating:
+          </Typography>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Reason"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            multiline
+            rows={4}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} color="primary">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmitReport}
+            color="error"
+            disabled={reason.trim() === ""}
+          >
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

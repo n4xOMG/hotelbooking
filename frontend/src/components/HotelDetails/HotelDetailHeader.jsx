@@ -10,6 +10,8 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { Favorite, Report } from "@mui/icons-material";
 import { useSelector, useDispatch } from "react-redux";
@@ -21,6 +23,13 @@ export default function HotelDetailHeader({ title }) {
   const { hotel } = useSelector((state) => state.hotel);
 
   const isAdmin = user?.role === "admin";
+
+   // Snackbar State
+   const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   // State to control Dialog visibility
   const [openDialog, setOpenDialog] = useState(false);
@@ -43,13 +52,31 @@ export default function HotelDetailHeader({ title }) {
     if (isAdmin && reason.trim() !== "") {
       const reportData = {
         reportedBy: user.username, // UserName
-        type: "hotel",
+        type: "Hotel",
         itemId: hotel._id, // Hotel ID
         reason, // User-provided reason
       };
-      dispatch(createReport(reportData));
+      dispatch(createReport(reportData))
+      .then(() => {
+        setSnackbar({
+          open: true,
+          message: "Report created successfully.",
+          severity: "success",
+        });
+      })
+      .catch(() => {
+        setSnackbar({
+          open: true,
+          message: "Failed to create report.",
+          severity: "error",
+        });
+      });
       handleCloseDialog();
     }
+  };
+  
+  const handleSnackbarClose = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -64,6 +91,22 @@ export default function HotelDetailHeader({ title }) {
       <Typography variant="h4" fontWeight="bold">
         {title}
       </Typography>
+
+      {/* Snackbar for Notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
 
       {/* Grouping Buttons Together */}
       <Box sx={{ display: "flex", gap: 1 }}>

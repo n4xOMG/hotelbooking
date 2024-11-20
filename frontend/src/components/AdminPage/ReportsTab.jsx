@@ -35,7 +35,7 @@ import {
   fetchReports,
   updateReport,
   deleteReport,
-  createReport,
+
 } from "../../redux/report/report.action";
 import LoadingSpinner from "../LoadingSpinner";
 
@@ -45,6 +45,7 @@ export default function ReportsTab() {
   const { reports, loading, error } = useSelector((state) => state.report);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
@@ -67,10 +68,14 @@ export default function ReportsTab() {
   const filteredReports = useMemo(() => {
     return (reports || []).filter((report) => {
       const matchesSearch =
-        (report.user?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (report.reportedBy?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           false) ||
         (report.reason?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           false);
+
+       const mathchesType = typeFilter
+        ? report.type === typeFilter
+        : true;
 
       const matchesStatus = statusFilter
         ? report.status === statusFilter
@@ -81,12 +86,12 @@ export default function ReportsTab() {
           new Date(dateFilter).toLocaleDateString()
         : true;
 
-      return matchesSearch && matchesStatus && matchesDate;
+      return matchesSearch && mathchesType && matchesStatus && matchesDate ;
     });
-  }, [reports, searchQuery, statusFilter, dateFilter]);
+  }, [reports, searchQuery, typeFilter, statusFilter, dateFilter]);
 
   const handleView = (reportId) => {
-    navigate(`/reports/${reportId}`);
+    navigate(`/hotels/${reportId}`);
   };
 
   const handleEdit = (report) => {
@@ -154,6 +159,7 @@ export default function ReportsTab() {
     setSearchQuery("");
     setStatusFilter("");
     setDateFilter("");
+    setTypeFilter("");
     dispatch(fetchReports());
   };
 
@@ -199,6 +205,22 @@ export default function ReportsTab() {
           </Grid>
           <Grid item xs={12} sm={3}>
             <FormControl fullWidth variant="outlined">
+              <InputLabel>Type</InputLabel>
+              <Select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                label="type"
+              >
+                <MenuItem value="">
+                  <em>All</em>
+                </MenuItem>
+                <MenuItem value="Hotel">Hotel</MenuItem>
+                <MenuItem value="Comment">Comment</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <FormControl fullWidth variant="outlined">
               <InputLabel>Status</InputLabel>
               <Select
                 value={statusFilter}
@@ -208,13 +230,13 @@ export default function ReportsTab() {
                 <MenuItem value="">
                   <em>All</em>
                 </MenuItem>
-                <MenuItem value="Pending">Pending</MenuItem>
                 <MenuItem value="Resolved">Resolved</MenuItem>
+                <MenuItem value="Pending">Pending</MenuItem>
                 <MenuItem value="Rejected">Rejected</MenuItem>
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={3}>
+          {/* <Grid item xs={12} sm={3}>
             <TextField
               fullWidth
               label="Creation Date"
@@ -226,7 +248,7 @@ export default function ReportsTab() {
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
             />
-          </Grid>
+          </Grid> */}
           <Grid item xs={12} sm={2}>
             <Button
               fullWidth
@@ -251,6 +273,9 @@ export default function ReportsTab() {
               <TableRow>
                 <TableCell>
                   <Typography fontWeight="bold">User</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography fontWeight="bold">Type</Typography>
                 </TableCell>
                 <TableCell>
                   <Typography fontWeight="bold">Reason</Typography>
@@ -282,7 +307,8 @@ export default function ReportsTab() {
                       backgroundColor: report.hidden ? "grey.100" : "inherit",
                     }}
                   >
-                    <TableCell>{report.user?.username || "Unknown User"}</TableCell>
+                    <TableCell>{report.reportedBy?.username || "Unknown User"}</TableCell>
+                    <TableCell>{report.type}</TableCell>
                     <TableCell>{report.reason}</TableCell>
                     <TableCell>{report.status}</TableCell>
                     <TableCell>
@@ -290,7 +316,7 @@ export default function ReportsTab() {
                     </TableCell>
                     <TableCell align="center">
                       <Tooltip title="View Report">
-                        <IconButton onClick={() => handleView(report._id)}>
+                        <IconButton onClick={() => handleView(report.itemId)}>
                           <Visibility color="primary" />
                         </IconButton>
                       </Tooltip>
