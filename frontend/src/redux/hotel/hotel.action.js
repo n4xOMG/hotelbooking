@@ -118,3 +118,17 @@ export const fetchAvailableHotels = () => async (dispatch) => {
     dispatch({ type: FETCH_HOTELS_FAILURE, payload: error.message });
   }
 };
+
+
+export const reportHotel = (hotelId) => async (dispatch) => {
+  dispatch({ type: 'REPORT_HOTEL_REQUEST' });
+  try {
+    const response = await axios.post(`${API_BASE_URL}/hotels/${hotelId}/report`);
+    dispatch({ type: 'REPORT_HOTEL_SUCCESS', payload: response.data });
+  } catch (error) {
+    dispatch({
+      type: 'REPORT_HOTEL_FAILURE',
+      payload: error.response?.data?.message || error.message,
+    });
+  }
+};
