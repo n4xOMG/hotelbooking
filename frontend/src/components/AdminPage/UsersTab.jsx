@@ -1,6 +1,6 @@
 // UsersTab.jsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
@@ -13,122 +13,173 @@ import {
   TableRow,
   IconButton,
   TextField,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  InputAdornment,
-  Paper,
-  MenuItem,
   Select,
+  MenuItem,
   FormControl,
   InputLabel,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  InputAdornment,
+  Paper,
+  Tooltip,
+  Snackbar,
+  Alert,
+  Grid,
 } from "@mui/material";
 import { Edit, Search } from "@mui/icons-material";
-import { fetchUsers, updateUser } from "../../redux/user/user.action";
+import {
+  fetchUsers,
+  updateUser,
+} from "../../redux/user/user.action";
 import LoadingSpinner from "../LoadingSpinner";
 
 export default function UsersTab() {
   const dispatch = useDispatch();
-  const { users, loading } = useSelector((state) => state.user);
-  
-  const [openDialog, setOpenDialog] = useState(false);
+  const { users, loading, error } = useSelector((state) => state.user);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [genderFilter, setGenderFilter] = useState("");
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [userData, setUserData] = useState({
-    firstname: "",
-    lastname: "",
     username: "",
     phoneNumber: "",
     email: "",
     role: "",
-    gender: "", // Added gender field
-    birthdate: "", // Added birthday field
-    avatarUrl: "",
+    gender: "",
   });
-  
-  const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
+
+  // Snackbar State
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   useEffect(() => {
-    const query = {};
-    if (searchQuery) {
-      query.search = searchQuery;
-    }
-    if (roleFilter) {
-      query.role = roleFilter;
-    }
+    dispatch(fetchUsers());
+  }, [dispatch]);
 
-    const queryString = new URLSearchParams(query).toString();
-    dispatch(fetchUsers(queryString));
-  }, [dispatch, searchQuery, roleFilter]);
+  const filteredUsers = useMemo(() => {
+    return (users || []).filter((user) => {
+      const matchesSearch =
+        (user.username?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+        (user.phoneNumber?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+        (user.email?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
 
-  const handleDialogOpen = (user = {
-    firstname: "", lastname: "", username: "", phoneNumber: "", email: "", role: "", gender: "", birthdate: "", avatarUrl: ""
-  }) => {
-    setUserData(user);
-    setOpenDialog(true);
-  };
+      const matchesRole = roleFilter ? user.role === roleFilter : true;
+      const matchesGender = genderFilter ? user.gender === genderFilter : true;
 
-  const handleDialogClose = () => {
-    setOpenDialog(false);
-    setUserData({
-      firstname: "",
-      lastname: "",
-      username: "",
-      phoneNumber: "",
-      email: "",
-      role: "",
-      gender: "",
-      birthdate: "",
-      avatarUrl: "",
+      return matchesSearch && matchesRole && matchesGender && !user.hidden;
     });
+  }, [users, searchQuery, roleFilter, genderFilter]);
+
+  const handleEdit = (user) => {
+    setSelectedUser(user);
+    setUserData({
+      username: user.username,
+      phoneNumber: user.phoneNumber,
+      email: user.email,
+      role: user.role,
+      gender: user.gender,
+    });
+    setOpenEditDialog(true);
   };
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setUserData({ ...userData, [name]: value });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUserData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveUser = () => {
-    const { firstname, lastname, username, phoneNumber, email, role, gender, birthdate } = userData;
-    if (!firstname || !lastname || !username || !phoneNumber || !email || !role || !gender || !birthdate) {
-      alert("Please fill in all required fields.");
-      return;
-    }
+  const handleEditSubmit = () => {
+    if (
+      userData.username.trim() &&
+      userData.phoneNumber.trim() &&
+      userData.email.trim() &&
+      userData.role.trim() &&
+      userData.gender.trim()
+    ) {
+      const updatedUser = {
+        ...selectedUser,
+        username: userData.username,
+        phoneNumber: userData.phoneNumber,
+        email: userData.email,
+        role: userData.role,
+        gender: userData.gender,
+      };
 
-    if (userData._id) {
-      dispatch(updateUser(userData._id, userData));
+      dispatch(updateUser(selectedUser._id, updatedUser))
+        .then(() => {
+          setSnackbar({
+            open: true,
+            message: "User updated successfully.",
+            severity: "success",
+          });
+          setOpenEditDialog(false);
+          dispatch(fetchUsers());
+        })
+        .catch(() => {
+          setSnackbar({
+            open: true,
+            message: "Failed to update user.",
+            severity: "error",
+          });
+        });
     }
-
-    handleDialogClose();
   };
 
   const handleClearFilters = () => {
     setSearchQuery("");
     setRoleFilter("");
+    setGenderFilter("");
+    dispatch(fetchUsers());
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   return (
-    <>
-      {loading ? (
-        <LoadingSpinner />
-      ) : (
-        <Box sx={{ p: 2 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+    <Box sx={{ p: 3 }}>
+      {/* Snackbar for Notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
+      <Paper sx={{ p: 3, mb: 4 }} elevation={3}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={4}>
             <TextField
+              fullWidth
               variant="outlined"
-              placeholder="Search users..."
+              placeholder="Search by username, phone, or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Search />
+                    <Search color="action" />
                   </InputAdornment>
                 ),
               }}
-              sx={{ flex: 1, mr: 2 }}
             />
-            <FormControl variant="outlined" sx={{ minWidth: 200, mr: 2 }}>
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <FormControl fullWidth variant="outlined">
               <InputLabel>Role</InputLabel>
               <Select
                 value={roleFilter}
@@ -143,166 +194,193 @@ export default function UsersTab() {
                 <MenuItem value="hotelOwner">Hotel Owner</MenuItem>
               </Select>
             </FormControl>
-            <Button variant="outlined" onClick={handleClearFilters}>
-              Clear Filters
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel>Gender</InputLabel>
+              <Select
+                value={genderFilter}
+                onChange={(e) => setGenderFilter(e.target.value)}
+                label="Gender"
+              >
+                <MenuItem value="">
+                  <em>All</em>
+                </MenuItem>
+                <MenuItem value="Male">Male</MenuItem>
+                <MenuItem value="Female">Female</MenuItem>
+                <MenuItem value="Other">Other</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={2}>
+            <Button
+              fullWidth
+              variant="contained"
+              color="secondary"
+              onClick={handleClearFilters}
+            >
+              Reset Filters
             </Button>
-          </Box>
+          </Grid>
+        </Grid>
+      </Paper>
 
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
+      {loading ? (
+        <LoadingSpinner />
+      ) : error ? (
+        <Typography color="error">{error}</Typography>
+      ) : (
+        <TableContainer component={Paper} elevation={3}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>
+                  <Typography fontWeight="bold">Username</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography fontWeight="bold">Phone Number</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography fontWeight="bold">Email</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography fontWeight="bold">Role</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography fontWeight="bold">Gender</Typography>
+                </TableCell>
+                <TableCell align="center">
+                  <Typography fontWeight="bold">Actions</Typography>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell>Username</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Actions</TableCell>
+                  <TableCell colSpan={6} align="center">
+                    <Typography>No users found.</Typography>
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {users.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      No users found matching your search/filter criteria.
+              ) : (
+                filteredUsers.map((user) => (
+                  <TableRow
+                    key={user._id}
+                    sx={{
+                      opacity: user.hidden ? 0.5 : 1,
+                      backgroundColor: user.hidden ? "grey.100" : "inherit",
+                    }}
+                  >
+                    <TableCell>{user.username || "N/A"}</TableCell>
+                    <TableCell>{user.phoneNumber || "N/A"}</TableCell>
+                    <TableCell>{user.email || "N/A"}</TableCell>
+                    <TableCell>{user.role || "N/A"}</TableCell>
+                    <TableCell>{user.gender || "N/A"}</TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="Edit User">
+                        <IconButton onClick={() => handleEdit(user)}>
+                          <Edit color="info" />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  users.map((user) => (
-                    <TableRow key={user._id}>
-                      <TableCell>{user.username}</TableCell>
-                      <TableCell>{user.phoneNumber}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.role}</TableCell>
-                      <TableCell>
-                        <IconButton onClick={() => handleDialogOpen(user)}>
-                          <Edit fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          {/* Edit/Add User Dialog */}
-          <Dialog open={openDialog} onClose={handleDialogClose}>
-            <DialogTitle>{userData._id ? "Edit User" : "Add User"}</DialogTitle>
-            <DialogContent>
-              <TextField
-                autoFocus
-                margin="dense"
-                name="firstname"
-                label="First Name"
-                type="text"
-                fullWidth
-                required
-                value={userData.firstname}
-                onChange={handleInputChange}
-              />
-              <TextField
-                margin="dense"
-                name="lastname"
-                label="Last Name"
-                type="text"
-                fullWidth
-                required
-                value={userData.lastname}
-                onChange={handleInputChange}
-              />
-              <TextField
-                margin="dense"
-                name="username"
-                label="Username"
-                type="text"
-                fullWidth
-                required
-                value={userData.username}
-                onChange={handleInputChange}
-              />
-              <TextField
-                margin="dense"
-                name="phoneNumber"
-                label="Phone Number"
-                type="text"
-                fullWidth
-                required
-                value={userData.phoneNumber}
-                onChange={handleInputChange}
-              />
-              <TextField
-                margin="dense"
-                name="email"
-                label="Email"
-                type="email"
-                fullWidth
-                required
-                value={userData.email}
-                onChange={handleInputChange}
-              />
-              <FormControl margin="dense" fullWidth required>
-                <InputLabel>Role</InputLabel>
-                <Select
-                  name="role"
-                  value={userData.role}
-                  onChange={handleInputChange}
-                  label="Role"
-                >
-                  <MenuItem value="admin">Admin</MenuItem>
-                  <MenuItem value="user">User</MenuItem>
-                  <MenuItem value="hotelOwner">Hotel Owner</MenuItem>
-                </Select>
-              </FormControl>
-              <FormControl margin="dense" fullWidth required>
-                <InputLabel>Gender</InputLabel>
-                <Select
-                  name="gender"
-                  value={userData.gender}
-                  onChange={handleInputChange}
-                  label="Gender"
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
-                  <MenuItem value="Male">Male</MenuItem>
-                  <MenuItem value="Female">Female</MenuItem>
-                  <MenuItem value="Other">Other</MenuItem>
-                </Select>
-              </FormControl>
-              <TextField
-                margin="dense"
-                name="birthday"
-                label="Birthday"
-                type="date"
-                fullWidth
-                required
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                value={userData.birthdate ? userData.birthdate.split('T')[0] : ""}
-                onChange={handleInputChange}
-              />
-              <TextField
-                margin="dense"
-                name="avatarUrl"
-                label="Avatar URL"
-                type="url"
-                fullWidth
-                value={userData.avatarUrl || ""}
-                onChange={handleInputChange}
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleDialogClose} color="primary">
-                Cancel
-              </Button>
-              <Button color="primary" onClick={handleSaveUser}>
-                Save
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </Box>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
-    </>
+
+      {/* Edit User Dialog */}
+      <Dialog
+        open={openEditDialog}
+        onClose={() => setOpenEditDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit User</DialogTitle>
+        <DialogContent>
+          <Box
+            component="form"
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              mt: 1,
+            }}
+            noValidate
+            autoComplete="off"
+          >
+            <TextField
+              margin="dense"
+              name="username"
+              label="Username"
+              type="text"
+              fullWidth
+              required
+              value={userData.username}
+              onChange={handleInputChange}
+            />
+            <TextField
+              margin="dense"
+              name="phoneNumber"
+              label="Phone Number"
+              type="text"
+              fullWidth
+              required
+              value={userData.phoneNumber}
+              onChange={handleInputChange}
+            />
+            <TextField
+              margin="dense"
+              name="email"
+              label="Email"
+              type="email"
+              fullWidth
+              required
+              value={userData.email}
+              onChange={handleInputChange}
+            />
+            <FormControl fullWidth margin="dense" required>
+              <InputLabel>Role</InputLabel>
+              <Select
+                name="role"
+                value={userData.role}
+                onChange={handleInputChange}
+                label="Role"
+              >
+                <MenuItem value="admin">Admin</MenuItem>
+                <MenuItem value="user">User</MenuItem>
+                <MenuItem value="hotelOwner">Hotel Owner</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth margin="dense" required>
+              <InputLabel>Gender</InputLabel>
+              <Select
+                name="gender"
+                value={userData.gender}
+                onChange={handleInputChange}
+                label="Gender"
+              >
+                <MenuItem value="Male">Male</MenuItem>
+                <MenuItem value="Female">Female</MenuItem>
+                <MenuItem value="Other">Other</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEditDialog(false)} color="secondary">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleEditSubmit}
+            color="primary"
+            variant="contained"
+          >
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }

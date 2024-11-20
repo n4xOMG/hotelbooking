@@ -1,3 +1,5 @@
+// CategoriesTab.jsx
+
 import React, { useEffect, useState } from "react";
 import * as Icons from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,6 +24,9 @@ import {
   InputAdornment,
   Paper,
   CircularProgress,
+  Snackbar,
+  Alert,
+  Typography,
 } from "@mui/material";
 import { Delete, Edit, MoreHoriz, Search } from "@mui/icons-material";
 import { fetchCategories, createCategory, updateCategory, deleteCategory } from "../../redux/category/category.action";
@@ -31,7 +36,7 @@ import { IconMenuItem } from "../IconMenuItem";
 
 export default function CategoriesTab() {
   const dispatch = useDispatch();
-  const { categories = [], loading } = useSelector((state) => state.category);
+  const { categories = [], loading, error } = useSelector((state) => state.category);
 
   const [menuAnchorEls, setMenuAnchorEls] = useState({});
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -43,6 +48,13 @@ export default function CategoriesTab() {
   const [actionLoading, setActionLoading] = useState(false); // To handle loading for save/delete actions
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+
+  // Snackbar State
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success", // 'success' | 'error' | 'warning' | 'info'
+  });
 
   const iconOptions = Object.keys(Icons).map((icon) => ({
     label: icon,
@@ -61,6 +73,17 @@ export default function CategoriesTab() {
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
+
+  // Handle global errors from Redux state
+  useEffect(() => {
+    if (error) {
+      setSnackbar({
+        open: true,
+        message: error,
+        severity: "error",
+      });
+    }
+  }, [error]);
 
   const handleMenuOpen = (event, id) => {
     setMenuAnchorEls((prev) => ({ ...prev, [id]: event.currentTarget }));
@@ -92,7 +115,11 @@ export default function CategoriesTab() {
 
   const handleSaveCategory = async () => {
     if (!categoryData.name || !categoryData.description) {
-      alert("Name and Description are required.");
+      setSnackbar({
+        open: true,
+        message: "Name and Description are required.",
+        severity: "warning",
+      });
       return;
     }
 
@@ -100,12 +127,28 @@ export default function CategoriesTab() {
       setActionLoading(true);
       if (categoryData._id) {
         await dispatch(updateCategory(categoryData._id, categoryData));
+        setSnackbar({
+          open: true,
+          message: "Category updated successfully.",
+          severity: "success",
+        });
       } else {
         await dispatch(createCategory(categoryData));
+        setSnackbar({
+          open: true,
+          message: "Category added successfully.",
+          severity: "success",
+        });
       }
       handleDialogClose();
+      dispatch(fetchCategories());
     } catch (error) {
       console.error("Failed to save category:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to save category.",
+        severity: "error",
+      });
     } finally {
       setActionLoading(false);
     }
@@ -115,9 +158,19 @@ export default function CategoriesTab() {
     try {
       setActionLoading(true);
       await dispatch(deleteCategory(id));
+      setSnackbar({
+        open: true,
+        message: "Category deleted successfully.",
+        severity: "success",
+      });
       dispatch(fetchCategories());
     } catch (error) {
       console.error("Failed to delete category:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to delete category.",
+        severity: "error",
+      });
     } finally {
       setActionLoading(false);
       handleMenuClose(id);
@@ -141,6 +194,10 @@ export default function CategoriesTab() {
     handleDeleteCategory(deleteId);
     setConfirmDelete(false);
     setDeleteId(null);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -169,10 +226,18 @@ export default function CategoriesTab() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Icon</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>
+                <Typography fontWeight="bold">Name</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography fontWeight="bold">Description</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography fontWeight="bold">Icon</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography fontWeight="bold">Actions</Typography>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -180,12 +245,16 @@ export default function CategoriesTab() {
               <TableRow key={category._id}>
                 <TableCell>{category.name}</TableCell>
                 <TableCell>{category.description}</TableCell>
-                <TableCell>{category.icon && Icons[category.icon] ? React.createElement(Icons[category.icon]) : <Icons.HelpOutline />}</TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleDialogOpen(category)}>
+                  {category.icon && Icons[category.icon]
+                    ? React.createElement(Icons[category.icon], { style: { color: "#1976d2" } })
+                    : <Icons.HelpOutline />}
+                </TableCell>
+                <TableCell>
+                  <IconButton onClick={() => handleDialogOpen(category)} color="primary" aria-label="edit">
                     <Edit fontSize="small" />
                   </IconButton>
-                  <IconButton onClick={(event) => handleMenuOpen(event, category._id)}>
+                  <IconButton onClick={(event) => handleMenuOpen(event, category._id)} color="secondary" aria-label="more">
                     <MoreHoriz fontSize="small" />
                   </IconButton>
                   <Menu
@@ -193,8 +262,11 @@ export default function CategoriesTab() {
                     open={Boolean(menuAnchorEls[category._id])}
                     onClose={() => handleMenuClose(category._id)}
                   >
-                    <MenuItem onClick={() => handleDeleteCategory(category._id)}>
-                      <Delete fontSize="small" sx={{ mr: 1 }} />
+                    <MenuItem onClick={() => {
+                      setDeleteId(category._id);
+                      setConfirmDelete(true);
+                    }}>
+                      <Delete fontSize="small" sx={{ mr: 1, color: "error.main" }} />
                       Delete
                     </MenuItem>
                   </Menu>
@@ -210,76 +282,88 @@ export default function CategoriesTab() {
         )}
       </TableContainer>
 
-      <Dialog open={openDialog} onClose={handleDialogClose}>
-        <DialogTitle>{categoryData.name ? "Edit Category" : "Add Category"}</DialogTitle>
+      {/* Add/Edit Category Dialog */}
+      <Dialog
+        open={openDialog}
+        onClose={handleDialogClose}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: "bold" }}>
+          {categoryData._id ? "Edit Category" : "Add Category"}
+        </DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            name="name"
-            label="Category Name"
-            type="text"
-            fullWidth
-            value={categoryData.name}
-            onChange={handleInputChange}
-          />
-          <TextField
-            margin="dense"
-            name="description"
-            label="Category Description"
-            type="text"
-            fullWidth
-            value={categoryData.description}
-            onChange={handleInputChange}
-          />
-          <TextField
-            margin="dense"
-            name="icon"
-            label="Icon"
-            type="text"
-            fullWidth
-            value={categoryData.icon}
-            onClick={handleIconClick}
-            InputProps={{
-              readOnly: true,
-            }}
-          />
-          <Popover
-            open={Boolean(iconAnchorEl)}
-            anchorEl={iconAnchorEl}
-            onClose={handleIconClose}
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "left",
-            }}
-          >
-            <Box sx={{ p: 1 }}>
-              <TextField
-                placeholder="Search icon"
-                fullWidth
-                variant="outlined"
-                size="small"
-                value={iconSearch}
-                onChange={(e) => setIconSearch(e.target.value)}
-              />
-            </Box>
-            <List
-              height={300}
-              itemCount={filteredIcons.length}
-              itemSize={50}
-              width={300}
-              itemData={filteredIcons}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              autoFocus
+              margin="dense"
+              name="name"
+              label="Category Name"
+              type="text"
+              fullWidth
+              value={categoryData.name}
+              onChange={handleInputChange}
+              required
+            />
+            <TextField
+              margin="dense"
+              name="description"
+              label="Category Description"
+              type="text"
+              fullWidth
+              value={categoryData.description}
+              onChange={handleInputChange}
+              required
+            />
+            <TextField
+              margin="dense"
+              name="icon"
+              label="Icon"
+              type="text"
+              fullWidth
+              value={categoryData.icon}
+              onClick={handleIconClick}
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+            <Popover
+              open={Boolean(iconAnchorEl)}
+              anchorEl={iconAnchorEl}
+              onClose={handleIconClose}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "left",
+              }}
             >
-              {({ index, style }) => (
-                <IconMenuItem
-                  index={index}
-                  style={style}
-                  data={filteredIcons}
-                  onSelect={handleIconSelect}
+              <Box sx={{ p: 1, width: 300 }}>
+                <TextField
+                  placeholder="Search icon..."
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  value={iconSearch}
+                  onChange={(e) => setIconSearch(e.target.value)}
                 />
-              )}
-            </List>
-          </Popover>
+                <List
+                  height={300}
+                  itemCount={filteredIcons.length}
+                  itemSize={50}
+                  width={300}
+                  itemData={filteredIcons}
+                >
+                  {({ index, style }) => (
+                    <IconMenuItem
+                      index={index}
+                      style={style}
+                      data={filteredIcons}
+                      onSelect={handleIconSelect}
+                    />
+                  )}
+                </List>
+              </Box>
+            </Popover>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose} color="primary">
@@ -291,8 +375,9 @@ export default function CategoriesTab() {
         </DialogActions>
       </Dialog>
 
+      {/* Confirm Delete Dialog */}
       <Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogTitle sx={{ fontWeight: "bold" }}>Confirm Deletion</DialogTitle>
         <DialogActions>
           <Button onClick={() => setConfirmDelete(false)} color="primary">
             Cancel
@@ -302,6 +387,18 @@ export default function CategoriesTab() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for Notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: "100%" }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

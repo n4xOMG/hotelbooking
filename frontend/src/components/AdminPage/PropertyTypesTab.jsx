@@ -1,3 +1,5 @@
+// PropertyTypesTab.jsx
+
 import React, { useEffect, useState } from "react";
 import * as Icons from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,16 +24,24 @@ import {
   InputAdornment,
   Paper,
   CircularProgress,
+  Snackbar,
+  Alert,
+  Typography,
 } from "@mui/material";
 import { Delete, Edit, MoreHoriz, Search } from "@mui/icons-material";
-import { fetchPropertyTypes, createPropertyType, updatePropertyType, deletePropertyType } from "../../redux/propertyType/propertyType.action";
+import {
+  fetchPropertyTypes,
+  createPropertyType,
+  updatePropertyType,
+  deletePropertyType,
+} from "../../redux/propertyType/propertyType.action";
 import LoadingSpinner from "../LoadingSpinner";
 import { FixedSizeList as List } from "react-window";
 import { IconMenuItem } from "../IconMenuItem";
 
 export default function PropertyTypesTab() {
   const dispatch = useDispatch();
-  const { propertyTypes, loading } = useSelector((store) => store.propertyType);
+  const { propertyTypes, loading, error } = useSelector((store) => store.propertyType);
   const [menuAnchorEls, setMenuAnchorEls] = useState({});
   const [selectedPropertyType, setSelectedPropertyType] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -42,6 +52,13 @@ export default function PropertyTypesTab() {
   const [actionLoading, setActionLoading] = useState(false); // To handle loading for save/delete actions
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+
+  // Snackbar State
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success", // 'success' | 'error' | 'warning' | 'info'
+  });
 
   const iconOptions = Object.keys(Icons).map((icon) => ({
     label: icon,
@@ -59,6 +76,17 @@ export default function PropertyTypesTab() {
   useEffect(() => {
     dispatch(fetchPropertyTypes());
   }, [dispatch]);
+
+  // Handle global errors from Redux state
+  useEffect(() => {
+    if (error) {
+      setSnackbar({
+        open: true,
+        message: error,
+        severity: "error",
+      });
+    }
+  }, [error]);
 
   const handleMenuOpen = (event, id) => {
     setMenuAnchorEls((prev) => ({ ...prev, [id]: event.currentTarget }));
@@ -90,7 +118,11 @@ export default function PropertyTypesTab() {
 
   const handleSavePropertyType = async () => {
     if (!propertyTypeData.type || !propertyTypeData.description) {
-      alert("Type and Description are required.");
+      setSnackbar({
+        open: true,
+        message: "Type and Description are required.",
+        severity: "warning",
+      });
       return;
     }
 
@@ -98,12 +130,28 @@ export default function PropertyTypesTab() {
       setActionLoading(true);
       if (propertyTypeData._id) {
         await dispatch(updatePropertyType(propertyTypeData._id, propertyTypeData));
+        setSnackbar({
+          open: true,
+          message: "Property Type updated successfully.",
+          severity: "success",
+        });
       } else {
         await dispatch(createPropertyType(propertyTypeData));
+        setSnackbar({
+          open: true,
+          message: "Property Type added successfully.",
+          severity: "success",
+        });
       }
       handleDialogClose();
+      dispatch(fetchPropertyTypes());
     } catch (error) {
       console.error("Failed to save property type:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to save property type.",
+        severity: "error",
+      });
     } finally {
       setActionLoading(false);
     }
@@ -113,9 +161,19 @@ export default function PropertyTypesTab() {
     try {
       setActionLoading(true);
       await dispatch(deletePropertyType(id));
+      setSnackbar({
+        open: true,
+        message: "Property Type deleted successfully.",
+        severity: "success",
+      });
       dispatch(fetchPropertyTypes());
     } catch (error) {
       console.error("Failed to delete property type:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to delete property type.",
+        severity: "error",
+      });
     } finally {
       setActionLoading(false);
       handleMenuClose(id);
@@ -139,6 +197,10 @@ export default function PropertyTypesTab() {
     handleDeletePropertyType(deleteId);
     setConfirmDelete(false);
     setDeleteId(null);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -167,10 +229,18 @@ export default function PropertyTypesTab() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Type</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Icon</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>
+                <Typography fontWeight="bold">Type</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography fontWeight="bold">Description</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography fontWeight="bold">Icon</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography fontWeight="bold">Actions</Typography>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -178,12 +248,16 @@ export default function PropertyTypesTab() {
               <TableRow key={propertyType._id}>
                 <TableCell>{propertyType.type}</TableCell>
                 <TableCell>{propertyType.description}</TableCell>
-                <TableCell>{Icons[propertyType.icon] ? React.createElement(Icons[propertyType.icon]) : null}</TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleDialogOpen(propertyType)}>
+                  {propertyType.icon && Icons[propertyType.icon]
+                    ? React.createElement(Icons[propertyType.icon], { style: { color: "#1976d2" } })
+                    : <Icons.HelpOutline />}
+                </TableCell>
+                <TableCell>
+                  <IconButton onClick={() => handleDialogOpen(propertyType)} color="primary" aria-label="edit">
                     <Edit fontSize="small" />
                   </IconButton>
-                  <IconButton onClick={(event) => handleMenuOpen(event, propertyType._id)}>
+                  <IconButton onClick={(event) => handleMenuOpen(event, propertyType._id)} color="secondary" aria-label="more">
                     <MoreHoriz fontSize="small" />
                   </IconButton>
                   <Menu
@@ -191,8 +265,13 @@ export default function PropertyTypesTab() {
                     open={Boolean(menuAnchorEls[propertyType._id])}
                     onClose={() => handleMenuClose(propertyType._id)}
                   >
-                    <MenuItem onClick={() => handleDeletePropertyType(propertyType._id)}>
-                      <Delete fontSize="small" sx={{ mr: 1 }} />
+                    <MenuItem
+                      onClick={() => {
+                        setDeleteId(propertyType._id);
+                        setConfirmDelete(true);
+                      }}
+                    >
+                      <Delete fontSize="small" sx={{ mr: 1, color: "error.main" }} />
                       Delete
                     </MenuItem>
                   </Menu>
@@ -208,76 +287,88 @@ export default function PropertyTypesTab() {
         )}
       </TableContainer>
 
-      <Dialog open={openDialog} onClose={handleDialogClose}>
-        <DialogTitle>{propertyTypeData.type ? "Edit Property Type" : "Add Property Type"}</DialogTitle>
+      {/* Add/Edit Property Type Dialog */}
+      <Dialog
+        open={openDialog}
+        onClose={handleDialogClose}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: "bold" }}>
+          {propertyTypeData._id ? "Edit Property Type" : "Add Property Type"}
+        </DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            name="type"
-            label="Type"
-            type="text"
-            fullWidth
-            value={propertyTypeData.type}
-            onChange={handleInputChange}
-          />
-          <TextField
-            margin="dense"
-            name="description"
-            label="Description"
-            type="text"
-            fullWidth
-            value={propertyTypeData.description}
-            onChange={handleInputChange}
-          />
-          <TextField
-            margin="dense"
-            name="icon"
-            label="Icon"
-            type="text"
-            fullWidth
-            value={propertyTypeData.icon}
-            onClick={handleIconClick}
-            InputProps={{
-              readOnly: true,
-            }}
-          />
-          <Popover
-            open={Boolean(iconAnchorEl)}
-            anchorEl={iconAnchorEl}
-            onClose={handleIconClose}
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "left",
-            }}
-          >
-            <Box sx={{ p: 1 }}>
-              <TextField
-                placeholder="Search icon"
-                fullWidth
-                variant="outlined"
-                size="small"
-                value={iconSearch}
-                onChange={(e) => setIconSearch(e.target.value)}
-              />
-            </Box>
-            <List
-              height={300}
-              itemCount={filteredIcons.length}
-              itemSize={50}
-              width={300}
-              itemData={filteredIcons}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              autoFocus
+              margin="dense"
+              name="type"
+              label="Type"
+              type="text"
+              fullWidth
+              value={propertyTypeData.type}
+              onChange={handleInputChange}
+              required
+            />
+            <TextField
+              margin="dense"
+              name="description"
+              label="Description"
+              type="text"
+              fullWidth
+              value={propertyTypeData.description}
+              onChange={handleInputChange}
+              required
+            />
+            <TextField
+              margin="dense"
+              name="icon"
+              label="Icon"
+              type="text"
+              fullWidth
+              value={propertyTypeData.icon}
+              onClick={handleIconClick}
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+            <Popover
+              open={Boolean(iconAnchorEl)}
+              anchorEl={iconAnchorEl}
+              onClose={handleIconClose}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "left",
+              }}
             >
-              {({ index, style }) => (
-                <IconMenuItem
-                  index={index}
-                  style={style}
-                  data={filteredIcons}
-                  onSelect={handleIconSelect}
+              <Box sx={{ p: 1, width: 300 }}>
+                <TextField
+                  placeholder="Search icon..."
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  value={iconSearch}
+                  onChange={(e) => setIconSearch(e.target.value)}
                 />
-              )}
-            </List>
-          </Popover>
+                <List
+                  height={300}
+                  itemCount={filteredIcons.length}
+                  itemSize={50}
+                  width={300}
+                  itemData={filteredIcons}
+                >
+                  {({ index, style }) => (
+                    <IconMenuItem
+                      index={index}
+                      style={style}
+                      data={filteredIcons}
+                      onSelect={handleIconSelect}
+                    />
+                  )}
+                </List>
+              </Box>
+            </Popover>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose} color="primary">
@@ -291,16 +382,28 @@ export default function PropertyTypesTab() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogTitle sx={{ fontWeight: "bold" }}>Confirm Deletion</DialogTitle>
         <DialogActions>
           <Button onClick={() => setConfirmDelete(false)} color="primary">
             Cancel
           </Button>
-          <Button onClick={confirmDeleteAction} color="primary">
-            Confirm
+          <Button onClick={confirmDeleteAction} color="primary" disabled={actionLoading}>
+            {actionLoading ? <CircularProgress size={24} /> : "Confirm"}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for Notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: "100%" }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

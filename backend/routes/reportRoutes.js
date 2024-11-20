@@ -42,17 +42,31 @@ router.put("/:id", verifyToken, async (req, res) => {
     return res.status(403).json({ message: "Access denied" });
   }
 
-  const { status } = req.body;
+  const { reason,status } = req.body;
 
   try {
-    const report = await Report.findById(req.params.id);
+    const report = await Report.findByIdAndUpdate(req.params.id, { reason, status }, { new: true });
     if (!report) {
       return res.status(404).json({ message: "Report not found" });
     }
-
-    report.status = status;
-    await report.save();
     res.json({ message: "Report status updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: `Server error: ${error}` });
+  }
+});
+
+// Delete a report (admin only)
+router.delete("/:id", verifyToken, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
+  try {
+    const report = await Report.findByIdAndDelete(req.params.id);
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+    res.json({ message: "Report deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: `Server error: ${error}` });
   }

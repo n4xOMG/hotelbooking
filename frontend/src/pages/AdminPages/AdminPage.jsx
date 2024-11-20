@@ -1,20 +1,40 @@
-import { Menu } from "@mui/icons-material";
+// AdminPage.jsx
+
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Box,
+  Drawer,
+  Button,
+  IconButton,
+  Tab,
+  Tabs,
+  Typography,
+  Link,
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
 import GridIcon from "@mui/icons-material/GridView";
 import HomeIcon from "@mui/icons-material/Home";
 import BedDoubleIcon from "@mui/icons-material/KingBed";
 import AlertCircleIcon from "@mui/icons-material/Report";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ManageAccountsIcon from "@mui/icons-material/ManageAccounts"
-import { RateReview } from "@mui/icons-material";
-import { Box, Drawer, Button, IconButton, Tab, Tabs, Typography } from "@mui/material";
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import RateReviewIcon from "@mui/icons-material/RateReview";
+import MountainIcon from "@mui/icons-material/Terrain";
 import CategoriesTab from "../../components/AdminPage/CategoriesTab";
 import PropertyTypesTab from "../../components/AdminPage/PropertyTypesTab";
 import AmenitiesTab from "../../components/AdminPage/AmenitiesTab";
 import UsersTab from "../../components/AdminPage/UsersTab";
 import ReportsTab from "../../components/AdminPage/ReportsTab";
 import RatingTab from "../../components/AdminPage/RatingTab";
+
+const linkStyles = {
+  display: "flex",
+  alignItems: "center",
+  textDecoration: "none",
+  color: "inherit",
+};
+
 export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("categories");
@@ -25,8 +45,8 @@ export default function AdminPage() {
     { name: "Categories", icon: <GridIcon />, id: "categories" },
     { name: "Property Types", icon: <HomeIcon />, id: "propertyTypes" },
     { name: "Amenities", icon: <BedDoubleIcon />, id: "amenities" },
-    { name: "Users", icon: <ManageAccountsIcon />, id: "users" }, 
-    { name: "Ratings", icon: <RateReview />, id: "ratings" },
+    { name: "Users", icon: <ManageAccountsIcon />, id: "users" },
+    { name: "Ratings", icon: <RateReviewIcon />, id: "ratings" },
     { name: "Reports", icon: <AlertCircleIcon />, id: "reports" },
   ];
 
@@ -48,7 +68,10 @@ export default function AdminPage() {
       >
         <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
           <Box sx={{ display: "flex", alignItems: "center", p: 2 }}>
-            <ArrowBackIcon sx={{ cursor: "pointer", mr: 1 }} onClick={() => navigate("/")} />
+            <ArrowBackIcon
+              sx={{ cursor: "pointer", mr: 1 }}
+              onClick={() => navigate("/")}
+            />
             <Typography variant="h6" sx={{ fontWeight: "bold" }}>
               Admin Dashboard
             </Typography>
@@ -64,7 +87,8 @@ export default function AdminPage() {
                   width: "100%",
                   textAlign: "left",
                   color: activeTab === tab.id ? "white" : "text.secondary",
-                  backgroundColor: activeTab === tab.id ? "primary.main" : "transparent",
+                  backgroundColor:
+                    activeTab === tab.id ? "primary.main" : "transparent",
                   opacity: activeTab === tab.id ? 1 : 0.8,
                   mb: 1,
                   "&:hover": {
@@ -82,12 +106,24 @@ export default function AdminPage() {
 
       {/* Main Content */}
       <Box component="main" sx={{ flexGrow: 1, overflow: "auto", p: 3 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+          }}
+        >
           <Typography variant="h4" color="text.primary">
             Manage {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
           </Typography>
+          <Link href="/" sx={linkStyles}>
+            <MountainIcon sx={{ height: 24, width: 24, mr: 1, color: "blue" }} />
+            <Typography sx={{ color: "blue" }}>Acme Hotels</Typography>
+          </Link>
           <IconButton onClick={toggleSidebar} sx={{ display: { md: "none" } }}>
-            <Menu />
+            <MenuIcon />
           </IconButton>
         </Box>
 
@@ -115,9 +151,9 @@ export default function AdminPage() {
           {activeTab === "categories" && <CategoriesTab />}
           {activeTab === "propertyTypes" && <PropertyTypesTab />}
           {activeTab === "amenities" && <AmenitiesTab />}
-          {activeTab === "users" && <UsersTab />} 
+          {activeTab === "users" && <UsersTab />}
           {activeTab === "ratings" && <RatingTab />}
-          {activeTab === "reports" && <ReportsTab />}    
+          {activeTab === "reports" && <ReportsTab />}
         </Box>
       </Box>
     </Box>

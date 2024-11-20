@@ -1,8 +1,9 @@
+// ReportsTab.jsx
+
 import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
-  IconButton,
   Button,
   Table,
   TableBody,
@@ -10,104 +11,194 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  IconButton,
   TextField,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  InputAdornment,
-  Paper,
-  MenuItem,
   Select,
+  MenuItem,
   FormControl,
   InputLabel,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  InputAdornment,
+  Paper,
+  Tooltip,
+  Snackbar,
+  Alert,
+  Grid,
 } from "@mui/material";
-import { Edit, Search, Reply } from "@mui/icons-material";
-import { fetchReports, updateReportStatus, createReport } from "../../redux/report/report.action";
+import { Edit, Delete, Visibility, Search } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import {
+  fetchReports,
+  updateReport,
+  deleteReport,
+  createReport,
+} from "../../redux/report/report.action";
 import LoadingSpinner from "../LoadingSpinner";
 
 export default function ReportsTab() {
   const dispatch = useDispatch();
-  const { reports, loading } = useSelector((state) => state.report);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isReplying, setIsReplying] = useState(false);
-  const [reportData, setReportData] = useState({ reportedBy: "", type: "", reason: "", status: "", reply: "" });
-  const [searchQuery, setSearchQuery] = useState(""); // state for report search
-  const [statusFilter, setStatusFilter] = useState(""); // state for status filter
+  const navigate = useNavigate();
+  const { reports, loading, error } = useSelector((state) => state.report);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [reportData, setReportData] = useState({
+    reason: "",
+    status: "",
+  });
+
+  // Snackbar State
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   useEffect(() => {
     dispatch(fetchReports());
   }, [dispatch]);
 
-  // Filter the reports based on search query and selected status
   const filteredReports = useMemo(() => {
-    return Array.isArray(reports)
-      ? reports.filter(
-          (report) =>
-            ((report.reportedBy && report.reportedBy.toLowerCase().includes(searchQuery.toLowerCase())) ||
-              (report.type && report.type.toLowerCase().includes(searchQuery.toLowerCase())) ||
-              (report.reason && report.reason.toLowerCase().includes(searchQuery.toLowerCase()))) &&
-            (statusFilter === "" || report.status === statusFilter)
-        )
-      : [];
-  }, [reports, searchQuery, statusFilter]);
+    return (reports || []).filter((report) => {
+      const matchesSearch =
+        (report.user?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          false) ||
+        (report.reason?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          false);
 
-  const handleDialogOpen = (report = { reportedBy: "", type: "", reason: "", status: "", reply: "" }, editing = false, replying = false) => {
-    setReportData(report);
-    setIsEditing(editing);
-    setIsReplying(replying);
-    setOpenDialog(true);
+      const matchesStatus = statusFilter
+        ? report.status === statusFilter
+        : true;
+
+      const matchesDate = dateFilter
+        ? new Date(report.createdAt).toLocaleDateString() ===
+          new Date(dateFilter).toLocaleDateString()
+        : true;
+
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [reports, searchQuery, statusFilter, dateFilter]);
+
+  const handleView = (reportId) => {
+    navigate(`/reports/${reportId}`);
   };
 
-  const handleDialogClose = () => {
-    setOpenDialog(false);
-    setReportData({ reportedBy: "", type: "", reason: "", status: "", reply: "" });
-    setIsEditing(false);
-    setIsReplying(false);
+  const handleEdit = (report) => {
+    setSelectedReport(report);
+    setReportData({
+      reason: report.reason,
+      status: report.status,
+    });
+    setOpenEditDialog(true);
   };
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setReportData({ ...reportData, [name]: value });
+  const handleDelete = (id) => {
+    dispatch(deleteReport(id))
+      .then(() => {
+        setSnackbar({
+          open: true,
+          message: "Report deleted successfully.",
+          severity: "success",
+        });
+        dispatch(fetchReports());
+      })
+      .catch(() => {
+        setSnackbar({
+          open: true,
+          message: "Failed to delete report.",
+          severity: "error",
+        });
+      });
   };
 
-  const handleSaveReport = () => {
-    if (isEditing) {
-      // Updating existing report
-      dispatch(updateReportStatus(reportData._id, reportData.status));
-    } else if (isReplying) {
-      // Replying to a report
-      // Assuming you have an action to handle replying to a report
-      dispatch(updateReportStatus(reportData._id, reportData.reply));
-    } else {
-      // Creating a new report
-      dispatch(createReport(reportData));
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setReportData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditSubmit = () => {
+    if (reportData.reason.trim() && reportData.status.trim()) {
+      const updatedReport = {
+        ...selectedReport,
+        reason: reportData.reason,
+        status: reportData.status,
+      };
+
+      dispatch(updateReport(selectedReport._id, updatedReport))
+        .then(() => {
+          setSnackbar({
+            open: true,
+            message: "Report updated successfully.",
+            severity: "success",
+          });
+          setOpenEditDialog(false);
+          dispatch(fetchReports());
+        })
+        .catch(() => {
+          setSnackbar({
+            open: true,
+            message: "Failed to update report.",
+            severity: "error",
+          });
+        });
     }
-    handleDialogClose();
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("");
+    setDateFilter("");
+    dispatch(fetchReports());
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   return (
-    <>
-      {loading ? (
-        <LoadingSpinner />
-      ) : (
-        <Box sx={{ p: 2 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+    <Box sx={{ p: 3 }}>
+      {/* Snackbar for Notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
+      <Paper sx={{ p: 3, mb: 4 }} elevation={3}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={4}>
             <TextField
+              fullWidth
               variant="outlined"
-              placeholder="Search reports..."
+              placeholder="Search by user or reason..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Search />
+                    <Search color="action" />
                   </InputAdornment>
                 ),
               }}
             />
-            <FormControl variant="outlined" sx={{ minWidth: 200 }}>
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <FormControl fullWidth variant="outlined">
               <InputLabel>Status</InputLabel>
               <Select
                 value={statusFilter}
@@ -119,118 +210,167 @@ export default function ReportsTab() {
                 </MenuItem>
                 <MenuItem value="Pending">Pending</MenuItem>
                 <MenuItem value="Resolved">Resolved</MenuItem>
+                <MenuItem value="Rejected">Rejected</MenuItem>
               </Select>
             </FormControl>
-            <Button variant="contained" color="primary" onClick={() => handleDialogOpen()}>
-              Add Report
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              fullWidth
+              label="Creation Date"
+              type="date"
+              variant="outlined"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+            />
+          </Grid>
+          <Grid item xs={12} sm={2}>
+            <Button
+              fullWidth
+              variant="contained"
+              color="secondary"
+              onClick={handleClearFilters}
+            >
+              Reset Filters
             </Button>
-          </Box>
+          </Grid>
+        </Grid>
+      </Paper>
 
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
+      {loading ? (
+        <LoadingSpinner />
+      ) : error ? (
+        <Typography color="error">{error}</Typography>
+      ) : (
+        <TableContainer component={Paper} elevation={3}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>
+                  <Typography fontWeight="bold">User</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography fontWeight="bold">Reason</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography fontWeight="bold">Status</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography fontWeight="bold">Created At</Typography>
+                </TableCell>
+                <TableCell align="center">
+                  <Typography fontWeight="bold">Actions</Typography>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredReports.length === 0 ? (
                 <TableRow>
-                  <TableCell>Reported By</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Reason</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
+                  <TableCell colSpan={5} align="center">
+                    <Typography>No reports found.</Typography>
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredReports.map((report) => (
-                  <TableRow key={report._id}>
-                    <TableCell>{report.reportedBy}</TableCell>
-                    <TableCell>{report.type}</TableCell>
+              ) : (
+                filteredReports.map((report) => (
+                  <TableRow
+                    key={report._id}
+                    sx={{
+                      opacity: report.hidden ? 0.5 : 1,
+                      backgroundColor: report.hidden ? "grey.100" : "inherit",
+                    }}
+                  >
+                    <TableCell>{report.user?.username || "Unknown User"}</TableCell>
                     <TableCell>{report.reason}</TableCell>
                     <TableCell>{report.status}</TableCell>
                     <TableCell>
-                      <IconButton onClick={() => handleDialogOpen(report, true, false)}>
-                        <Edit fontSize="small" />
-                      </IconButton>
-                      <IconButton onClick={() => handleDialogOpen(report, false, true)}>
-                        <Reply fontSize="small" />
-                      </IconButton>
+                      {new Date(report.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="View Report">
+                        <IconButton onClick={() => handleView(report._id)}>
+                          <Visibility color="primary" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Edit Report">
+                        <IconButton onClick={() => handleEdit(report)}>
+                          <Edit color="info" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete Report">
+                        <IconButton onClick={() => handleDelete(report._id)}>
+                          <Delete color="error" />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Dialog open={openDialog} onClose={handleDialogClose}>
-            <DialogTitle>{isEditing ? "Edit Report" : isReplying ? "Reply to Report" : "Add Report"}</DialogTitle>
-            <DialogContent>
-              <TextField
-                autoFocus
-                margin="dense"
-                name="reportedBy"
-                label="Reported By"
-                type="text"
-                fullWidth
-                required
-                value={reportData.reportedBy}
-                onChange={handleInputChange}
-                disabled={isEditing || isReplying}
-              />
-              <TextField
-                margin="dense"
-                name="type"
-                label="Type"
-                type="text"
-                fullWidth
-                required
-                value={reportData.type}
-                onChange={handleInputChange}
-                disabled={isEditing || isReplying}
-              />
-              <TextField
-                margin="dense"
-                name="reason"
-                label="Reason"
-                type="text"
-                fullWidth
-                required
-                value={reportData.reason}
-                onChange={handleInputChange}
-                disabled={isEditing || isReplying}
-              />
-              {isReplying ? (
-                <TextField
-                  margin="dense"
-                  name="reply"
-                  label="Reply"
-                  type="text"
-                  fullWidth
-                  required
-                  value={reportData.reply}
-                  onChange={handleInputChange}
-                />
-              ) : (
-                <TextField
-                  margin="dense"
-                  name="status"
-                  label="Status"
-                  type="text"
-                  fullWidth
-                  required
-                  value={reportData.status}
-                  onChange={handleInputChange}
-                  disabled
-                />
+                ))
               )}
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleDialogClose} color="primary">
-                Cancel
-              </Button>
-              <Button color="primary" onClick={handleSaveReport}>
-                Save
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </Box>
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
-    </>
+
+      {/* Edit Report Dialog */}
+      <Dialog
+        open={openEditDialog}
+        onClose={() => setOpenEditDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit Report</DialogTitle>
+        <DialogContent>
+          <Box
+            component="form"
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              mt: 1,
+            }}
+            noValidate
+            autoComplete="off"
+          >
+            <TextField
+              margin="dense"
+              name="reason"
+              label="Reason"
+              type="text"
+              fullWidth
+              required
+              value={reportData.reason}
+              onChange={handleInputChange}
+            />
+            <FormControl fullWidth margin="dense" required>
+              <InputLabel>Status</InputLabel>
+              <Select
+                name="status"
+                value={reportData.status}
+                onChange={handleInputChange}
+                label="Status"
+              >
+                <MenuItem value="Pending">Pending</MenuItem>
+                <MenuItem value="Resolved">Resolved</MenuItem>
+                <MenuItem value="Rejected">Rejected</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEditDialog(false)} color="secondary">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleEditSubmit}
+            color="primary"
+            variant="contained"
+          >
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }
