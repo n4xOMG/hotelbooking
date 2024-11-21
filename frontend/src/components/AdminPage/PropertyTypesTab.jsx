@@ -23,10 +23,12 @@ import {
   Popover,
   InputAdornment,
   Paper,
+  Grid,
   CircularProgress,
   Snackbar,
   Alert,
   Typography,
+  TablePagination, // Added for pagination
 } from "@mui/material";
 import { Delete, Edit, MoreHoriz, Search } from "@mui/icons-material";
 import {
@@ -41,17 +43,27 @@ import { IconMenuItem } from "../IconMenuItem";
 
 export default function PropertyTypesTab() {
   const dispatch = useDispatch();
-  const { propertyTypes, loading, error } = useSelector((store) => store.propertyType);
+  const { propertyTypes, loading, error } = useSelector(
+    (store) => store.propertyType
+  );
   const [menuAnchorEls, setMenuAnchorEls] = useState({});
   const [selectedPropertyType, setSelectedPropertyType] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [propertyTypeData, setPropertyTypeData] = useState({ type: "", description: "", icon: "" });
+  const [propertyTypeData, setPropertyTypeData] = useState({
+    type: "",
+    description: "",
+    icon: "",
+  });
   const [iconAnchorEl, setIconAnchorEl] = useState(null);
   const [iconSearch, setIconSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [actionLoading, setActionLoading] = useState(false); // To handle loading for save/delete actions
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+
+  // Pagination States
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Snackbar State
   const [snackbar, setSnackbar] = useState({
@@ -71,6 +83,12 @@ export default function PropertyTypesTab() {
 
   const filteredPropertyTypes = propertyTypes.filter((propertyType) =>
     propertyType.type.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Calculate paginated property types
+  const paginatedPropertyTypes = filteredPropertyTypes.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
   );
 
   useEffect(() => {
@@ -98,7 +116,9 @@ export default function PropertyTypesTab() {
     setSelectedPropertyType(null);
   };
 
-  const handleDialogOpen = (propertyType = { type: "", description: "", icon: "" }) => {
+  const handleDialogOpen = (
+    propertyType = { type: "", description: "", icon: "" }
+  ) => {
     setPropertyTypeData(propertyType);
     setSelectedPropertyType(propertyType._id ? propertyType : null);
     setOpenDialog(true);
@@ -109,6 +129,7 @@ export default function PropertyTypesTab() {
     setPropertyTypeData({ type: "", description: "", icon: "" });
     setIconSearch("");
     setIconAnchorEl(null);
+    setPage(0); // Reset to first page on dialog close
   };
 
   const handleInputChange = (event) => {
@@ -203,89 +224,168 @@ export default function PropertyTypesTab() {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
+  // Pagination Handlers
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   return (
-    <Box sx={{ p: 2 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <TextField
-            variant="outlined"
-            placeholder="Search property types..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-          />
+    <Box sx={{ p: 3 }}>
+      <Paper sx={{ p: 3, mb: 4 }} elevation={3}>
+        <Grid
+          container
+          alignItems="center"
+          spacing={2}
+          justifyContent="space-between"
+        >
+          {/* Search bar */}
+          <Grid item xs={12} sm={5}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Search property types..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          {/* Add Property Type button */}
+          <Grid item xs={12} sm={2}>
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              onClick={() => handleDialogOpen()}
+            >
+              Add Property Type
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Loading Indicator */}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <CircularProgress />
         </Box>
-        <Button variant="contained" color="primary" onClick={() => handleDialogOpen()}>
-          Add Property Type
-        </Button>
-      </Box>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <Typography fontWeight="bold">Type</Typography>
-              </TableCell>
-              <TableCell>
-                <Typography fontWeight="bold">Description</Typography>
-              </TableCell>
-              <TableCell>
-                <Typography fontWeight="bold">Icon</Typography>
-              </TableCell>
-              <TableCell>
-                <Typography fontWeight="bold">Actions</Typography>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredPropertyTypes.map((propertyType) => (
-              <TableRow key={propertyType._id}>
-                <TableCell>{propertyType.type}</TableCell>
-                <TableCell>{propertyType.description}</TableCell>
-                <TableCell>
-                  {propertyType.icon && Icons[propertyType.icon]
-                    ? React.createElement(Icons[propertyType.icon], { style: { color: "#1976d2" } })
-                    : <Icons.HelpOutline />}
-                </TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleDialogOpen(propertyType)} color="primary" aria-label="edit">
-                    <Edit fontSize="small" />
-                  </IconButton>
-                  <IconButton onClick={(event) => handleMenuOpen(event, propertyType._id)} color="secondary" aria-label="more">
-                    <MoreHoriz fontSize="small" />
-                  </IconButton>
-                  <Menu
-                    anchorEl={menuAnchorEls[propertyType._id]}
-                    open={Boolean(menuAnchorEls[propertyType._id])}
-                    onClose={() => handleMenuClose(propertyType._id)}
-                  >
-                    <MenuItem
-                      onClick={() => {
-                        setDeleteId(propertyType._id);
-                        setConfirmDelete(true);
-                      }}
-                    >
-                      <Delete fontSize="small" sx={{ mr: 1, color: "error.main" }} />
-                      Delete
-                    </MenuItem>
-                  </Menu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {loading && (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-            <LoadingSpinner />
+      ) : (
+        <>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>
+                    <Typography fontWeight="bold">Type</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Description</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Icon</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Actions</Typography>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginatedPropertyTypes.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">
+                      <Typography>No property types found.</Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedPropertyTypes.map((propertyType) => (
+                    <TableRow key={propertyType._id}>
+                      <TableCell>{propertyType.type}</TableCell>
+                      <TableCell>{propertyType.description}</TableCell>
+                      <TableCell>
+                        {propertyType.icon && Icons[propertyType.icon]
+                          ? React.createElement(Icons[propertyType.icon], {
+                              style: { color: "#1976d2" },
+                            })
+                          : <Icons.HelpOutline />}
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          onClick={() => handleDialogOpen(propertyType)}
+                          color="primary"
+                          aria-label="edit"
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          onClick={(event) =>
+                            handleMenuOpen(event, propertyType._id)
+                          }
+                          color="secondary"
+                          aria-label="more"
+                        >
+                          <MoreHoriz fontSize="small" />
+                        </IconButton>
+                        <Menu
+                          anchorEl={menuAnchorEls[propertyType._id]}
+                          open={Boolean(menuAnchorEls[propertyType._id])}
+                          onClose={() => handleMenuClose(propertyType._id)}
+                        >
+                          <MenuItem
+                            onClick={() => {
+                              setDeleteId(propertyType._id);
+                              setConfirmDelete(true);
+                            }}
+                          >
+                            <Delete
+                              fontSize="small"
+                              sx={{ mr: 1, color: "error.main" }}
+                            />
+                            Delete
+                          </MenuItem>
+                        </Menu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Pagination and Total Count */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              mt: 2,
+            }}
+          >
+            <Typography variant="body2" sx={{ mr: 2 }}>
+              Total: {filteredPropertyTypes.length}
+            </Typography>
+            <TablePagination
+              component="div"
+              count={filteredPropertyTypes.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25]}
+            />
           </Box>
-        )}
-      </TableContainer>
+        </>
+      )}
 
       {/* Add/Edit Property Type Dialog */}
       <Dialog
@@ -295,10 +395,19 @@ export default function PropertyTypesTab() {
         fullWidth
       >
         <DialogTitle sx={{ fontWeight: "bold" }}>
-          {propertyTypeData._id ? "Edit Property Type" : "Add Property Type"}
+          {propertyTypeData._id
+            ? "Edit Property Type"
+            : "Add Property Type"}
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              mt: 1,
+            }}
+          >
             <TextField
               autoFocus
               margin="dense"
@@ -374,20 +483,28 @@ export default function PropertyTypesTab() {
           <Button onClick={handleDialogClose} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleSavePropertyType} color="primary" disabled={actionLoading}>
+          <Button
+            onClick={handleSavePropertyType}
+            color="primary"
+            disabled={actionLoading}
+          >
             {actionLoading ? <CircularProgress size={24} /> : "Save"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Confirm Delete Dialog */}
       <Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)}>
         <DialogTitle sx={{ fontWeight: "bold" }}>Confirm Deletion</DialogTitle>
         <DialogActions>
           <Button onClick={() => setConfirmDelete(false)} color="primary">
             Cancel
           </Button>
-          <Button onClick={confirmDeleteAction} color="primary" disabled={actionLoading}>
+          <Button
+            onClick={confirmDeleteAction}
+            color="primary"
+            disabled={actionLoading}
+          >
             {actionLoading ? <CircularProgress size={24} /> : "Confirm"}
           </Button>
         </DialogActions>
@@ -400,7 +517,11 @@ export default function PropertyTypesTab() {
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: "100%" }}>
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

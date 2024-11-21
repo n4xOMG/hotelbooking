@@ -28,6 +28,7 @@ import {
   Snackbar,
   Alert,
   Grid,
+  TablePagination, // Added for pagination
 } from "@mui/material";
 import { Edit, Delete, Visibility, Report, Search } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -49,6 +50,10 @@ export default function RatingTab() {
   const [openReportDialog, setOpenReportDialog] = useState(false);
   const [selectedRating, setSelectedRating] = useState(null);
   const [reportContent, setReportContent] = useState("");
+
+  // Pagination States
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Snackbar State
   const [snackbar, setSnackbar] = useState({
@@ -77,6 +82,11 @@ export default function RatingTab() {
       return matchesSearch && matchesStar && matchesDate && !rating.hidden;
     });
   }, [ratings, searchQuery, starFilter, dateFilter]);
+
+  // Calculate paginated ratings
+  const paginatedRatings = useMemo(() => {
+    return filteredRatings.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  }, [filteredRatings, page, rowsPerPage]);
 
   const handleView = (hotelId) => {
     navigate(`/hotels/${hotelId}`);
@@ -170,6 +180,16 @@ export default function RatingTab() {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
+  // Pagination Handlers
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       {/* Snackbar for Notifications */}
@@ -183,7 +203,6 @@ export default function RatingTab() {
           {snackbar.message}
         </Alert>
       </Snackbar>
-
 
       <Paper sx={{ p: 3, mb: 4 }} elevation={3}>
         <Grid container spacing={2} alignItems="center">
@@ -253,72 +272,97 @@ export default function RatingTab() {
       ) : error ? (
         <Typography color="error">{error}</Typography>
       ) : (
-        <TableContainer component={Paper} elevation={3}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <Typography fontWeight="bold">User</Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography fontWeight="bold">Stars</Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography fontWeight="bold">Comment</Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography fontWeight="bold">Created At</Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Typography fontWeight="bold">Actions</Typography>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredRatings.length === 0 ? (
+        <>
+          <TableContainer component={Paper} elevation={3}>
+            <Table>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    <Typography>No ratings found.</Typography>
+                  <TableCell>
+                    <Typography fontWeight="bold">User</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Stars</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Comment</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Created At</Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Typography fontWeight="bold">Actions</Typography>
                   </TableCell>
                 </TableRow>
-              ) : (
-                filteredRatings.map((rating) => (
-                  <TableRow
-                    key={rating._id}
-                    sx={{
-                      opacity: rating.hidden ? 0.5 : 1,
-                      backgroundColor: rating.hidden ? "grey.100" : "inherit",
-                    }}
-                  >
-                    <TableCell>{rating.user?.username || "Unknown User"}</TableCell>
-                    <TableCell>{rating.value}</TableCell>
-                    <TableCell>{rating.comment}</TableCell>
-                    <TableCell>
-                      {new Date(rating.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="View Rating">
-                        <IconButton onClick={() => handleView(rating.hotel)}>
-                          <Visibility color="primary" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete Rating">
-                        <IconButton onClick={() => handleDelete(rating._id)}>
-                          <Delete color="error" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Report Rating">
-                        <IconButton onClick={() => handleReport(rating)}>
-                          <Report color="secondary" />
-                        </IconButton>
-                      </Tooltip>
+              </TableHead>
+              <TableBody>
+                {paginatedRatings.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center">
+                      <Typography>No ratings found.</Typography>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                ) : (
+                  paginatedRatings.map((rating) => (
+                    <TableRow
+                      key={rating._id}
+                      sx={{
+                        opacity: rating.hidden ? 0.5 : 1,
+                        backgroundColor: rating.hidden ? "grey.100" : "inherit",
+                      }}
+                    >
+                      <TableCell>{rating.user?.username || "Unknown User"}</TableCell>
+                      <TableCell>{rating.value}</TableCell>
+                      <TableCell>{rating.comment}</TableCell>
+                      <TableCell>
+                        {new Date(rating.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="View Rating">
+                          <IconButton onClick={() => handleView(rating.hotel)}>
+                            <Visibility color="primary" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete Rating">
+                          <IconButton onClick={() => handleDelete(rating._id)}>
+                            <Delete color="error" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Report Rating">
+                          <IconButton onClick={() => handleReport(rating)}>
+                            <Report color="secondary" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Pagination and Total Count */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              mt: 2,
+            }}
+          >
+            <Typography variant="body2" sx={{ mr: 2 }}>
+              Total: {filteredRatings.length}
+            </Typography>
+            <TablePagination
+              component="div"
+              count={filteredRatings.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25]}
+            />
+          </Box>
+        </>
       )}
 
       {/* Report Dialog */}

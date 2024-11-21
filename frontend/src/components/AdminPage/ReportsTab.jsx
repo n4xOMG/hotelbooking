@@ -28,6 +28,7 @@ import {
   Snackbar,
   Alert,
   Grid,
+  TablePagination, // Added for pagination
 } from "@mui/material";
 import { Edit, Delete, Visibility, Search } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -35,7 +36,6 @@ import {
   fetchReports,
   updateReport,
   deleteReport,
-
 } from "../../redux/report/report.action";
 import LoadingSpinner from "../LoadingSpinner";
 
@@ -54,6 +54,16 @@ export default function ReportsTab() {
     status: "",
   });
 
+  const statusColors = {
+    Rejected: "#f44336", // Red
+    Resolved: "#4caf50", // Green
+    Pending: "#2196f3", // Blue
+  };
+
+  // Pagination States
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   // Snackbar State
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -68,14 +78,13 @@ export default function ReportsTab() {
   const filteredReports = useMemo(() => {
     return (reports || []).filter((report) => {
       const matchesSearch =
-        (report.reportedBy?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          false) ||
+        (report.reportedBy?.username
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) || false) ||
         (report.reason?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           false);
 
-       const mathchesType = typeFilter
-        ? report.type === typeFilter
-        : true;
+      const mathchesType = typeFilter ? report.type === typeFilter : true;
 
       const matchesStatus = statusFilter
         ? report.status === statusFilter
@@ -86,9 +95,17 @@ export default function ReportsTab() {
           new Date(dateFilter).toLocaleDateString()
         : true;
 
-      return matchesSearch && mathchesType && matchesStatus && matchesDate ;
+      return matchesSearch && mathchesType && matchesStatus && matchesDate;
     });
   }, [reports, searchQuery, typeFilter, statusFilter, dateFilter]);
+
+  // Calculate paginated reports
+  const paginatedReports = useMemo(() => {
+    return filteredReports.slice(
+      page * rowsPerPage,
+      page * rowsPerPage + rowsPerPage
+    );
+  }, [filteredReports, page, rowsPerPage]);
 
   const handleView = (reportId) => {
     navigate(`/hotels/${reportId}`);
@@ -161,10 +178,21 @@ export default function ReportsTab() {
     setDateFilter("");
     setTypeFilter("");
     dispatch(fetchReports());
+    setPage(0); // Reset to first page on filter clear
   };
 
   const handleSnackbarClose = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  // Pagination Handlers
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   return (
@@ -209,7 +237,7 @@ export default function ReportsTab() {
               <Select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                label="type"
+                label="Type"
               >
                 <MenuItem value="">
                   <em>All</em>
@@ -267,76 +295,110 @@ export default function ReportsTab() {
       ) : error ? (
         <Typography color="error">{error}</Typography>
       ) : (
-        <TableContainer component={Paper} elevation={3}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <Typography fontWeight="bold">User</Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography fontWeight="bold">Type</Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography fontWeight="bold">Reason</Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography fontWeight="bold">Status</Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography fontWeight="bold">Created At</Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Typography fontWeight="bold">Actions</Typography>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredReports.length === 0 ? (
+        <>
+          <TableContainer component={Paper} elevation={3}>
+            <Table>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    <Typography>No reports found.</Typography>
+                  <TableCell>
+                    <Typography fontWeight="bold">User</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Type</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Reason</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Status</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Created At</Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Typography fontWeight="bold">Actions</Typography>
                   </TableCell>
                 </TableRow>
-              ) : (
-                filteredReports.map((report) => (
-                  <TableRow
-                    key={report._id}
-                    sx={{
-                      opacity: report.hidden ? 0.5 : 1,
-                      backgroundColor: report.hidden ? "grey.100" : "inherit",
-                    }}
-                  >
-                    <TableCell>{report.reportedBy?.username || "Unknown User"}</TableCell>
-                    <TableCell>{report.type}</TableCell>
-                    <TableCell>{report.reason}</TableCell>
-                    <TableCell>{report.status}</TableCell>
-                    <TableCell>
-                      {new Date(report.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="View Report">
-                        <IconButton onClick={() => handleView(report.itemId)}>
-                          <Visibility color="primary" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Edit Report">
-                        <IconButton onClick={() => handleEdit(report)}>
-                          <Edit color="info" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete Report">
-                        <IconButton onClick={() => handleDelete(report._id)}>
-                          <Delete color="error" />
-                        </IconButton>
-                      </Tooltip>
+              </TableHead>
+              <TableBody>
+                {paginatedReports.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      <Typography>No reports found.</Typography>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                ) : (
+                  paginatedReports.map((report) => (
+                    <TableRow
+                      key={report._id}
+                      sx={{
+                        opacity: report.hidden ? 0.5 : 1,
+                        backgroundColor: report.hidden ? "grey.100" : "inherit",
+                      }}
+                    >
+                      <TableCell>
+                        {report.reportedBy?.username || "Unknown User"}
+                      </TableCell>
+                      <TableCell>{report.type}</TableCell>
+                      <TableCell>{report.reason}</TableCell>
+                      <TableCell
+                        style={{
+                          color: statusColors[report.status] || "#000", // Use color based on status
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {report.status}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(report.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="View Report">
+                          <IconButton onClick={() => handleView(report.itemId)}>
+                            <Visibility color="primary" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Edit Report">
+                          <IconButton onClick={() => handleEdit(report)}>
+                            <Edit color="info" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete Report">
+                          <IconButton onClick={() => handleDelete(report._id)}>
+                            <Delete color="error" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Pagination and Total Count */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              mt: 2,
+            }}
+          >
+            <Typography variant="body2" sx={{ mr: 2 }}>
+              Total: {filteredReports.length}
+            </Typography>
+            <TablePagination
+              component="div"
+              count={filteredReports.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25]}
+            />
+          </Box>
+        </>
       )}
 
       {/* Edit Report Dialog */}

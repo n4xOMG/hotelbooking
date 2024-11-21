@@ -28,6 +28,7 @@ import {
   Snackbar,
   Alert,
   Grid,
+  TablePagination, // Added for pagination
 } from "@mui/material";
 import { Edit, Search } from "@mui/icons-material";
 import {
@@ -51,6 +52,16 @@ export default function UsersTab() {
     role: "",
     gender: "",
   });
+
+  const roleColors = {
+    user: '#4caf50', // Green
+    admin: '#f44336', // Red
+    hotelOwner: '#2196f3', // Blue
+  };
+
+  // Pagination States
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Snackbar State
   const [snackbar, setSnackbar] = useState({
@@ -76,6 +87,11 @@ export default function UsersTab() {
       return matchesSearch && matchesRole && matchesGender && !user.hidden;
     });
   }, [users, searchQuery, roleFilter, genderFilter]);
+
+  // Calculate paginated users
+  const paginatedUsers = useMemo(() => {
+    return filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  }, [filteredUsers, page, rowsPerPage]);
 
   const handleEdit = (user) => {
     setSelectedUser(user);
@@ -136,10 +152,21 @@ export default function UsersTab() {
     setRoleFilter("");
     setGenderFilter("");
     dispatch(fetchUsers());
+    setPage(0); // Reset to first page on filter clear
   };
 
   const handleSnackbarClose = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  // Pagination Handlers
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   return (
@@ -230,64 +257,92 @@ export default function UsersTab() {
       ) : error ? (
         <Typography color="error">{error}</Typography>
       ) : (
-        <TableContainer component={Paper} elevation={3}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <Typography fontWeight="bold">Username</Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography fontWeight="bold">Phone Number</Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography fontWeight="bold">Email</Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography fontWeight="bold">Role</Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography fontWeight="bold">Gender</Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Typography fontWeight="bold">Actions</Typography>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredUsers.length === 0 ? (
+        <>
+          <TableContainer component={Paper} elevation={3}>
+            <Table>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    <Typography>No users found.</Typography>
+                  <TableCell>
+                    <Typography fontWeight="bold">Username</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Phone Number</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Email</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Role</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Gender</Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Typography fontWeight="bold">Actions</Typography>
                   </TableCell>
                 </TableRow>
-              ) : (
-                filteredUsers.map((user) => (
-                  <TableRow
-                    key={user._id}
-                    sx={{
-                      opacity: user.hidden ? 0.5 : 1,
-                      backgroundColor: user.hidden ? "grey.100" : "inherit",
-                    }}
-                  >
-                    <TableCell>{user.username || "N/A"}</TableCell>
-                    <TableCell>{user.phoneNumber || "N/A"}</TableCell>
-                    <TableCell>{user.email || "N/A"}</TableCell>
-                    <TableCell>{user.role || "N/A"}</TableCell>
-                    <TableCell>{user.gender || "N/A"}</TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="Edit User">
-                        <IconButton onClick={() => handleEdit(user)}>
-                          <Edit color="info" />
-                        </IconButton>
-                      </Tooltip>
+              </TableHead>
+              <TableBody>
+                {paginatedUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      <Typography>No users found.</Typography>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                ) : (
+                  paginatedUsers.map((user) => (
+                    <TableRow
+                      key={user._id}
+                      sx={{
+                        opacity: user.hidden ? 0.5 : 1,
+                        backgroundColor: user.hidden ? "grey.100" : "inherit",
+                      }}
+                    >
+                      <TableCell>{user.username || "N/A"}</TableCell>
+                      <TableCell>{user.phoneNumber || "N/A"}</TableCell>
+                      <TableCell>{user.email || "N/A"}</TableCell>
+                      <TableCell style={{
+                        color: roleColors[user.role] || '#000', // Use color based on role
+                        fontWeight: 'bold',
+                      }}>{user.role || "N/A"}</TableCell>
+                      <TableCell>{user.gender || "N/A"}</TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="Edit User">
+                          <IconButton onClick={() => handleEdit(user)}>
+                            <Edit color="info" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Pagination and Total Count */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              mt: 2,
+            }}
+          >
+            <Typography variant="body2" sx={{ mr: 2 }}>
+              Total: {filteredUsers.length}
+            </Typography>
+            <TablePagination
+              component="div"
+              count={filteredUsers.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25]}
+            />
+          </Box>
+        </>
       )}
 
       {/* Edit User Dialog */}

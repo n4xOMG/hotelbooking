@@ -135,24 +135,33 @@ export default function AdminPage() {
         <Box component="main" sx={{ flexGrow: 1, overflow: "auto", p: 3 }}>
           {/* Header */}
           <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-            }}
-          >
-            <Typography variant="h4" color="text.primary">
-              Manage {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-            </Typography>
-            <Link href="/" sx={linkStyles}>
-              <MountainIcon sx={{ height: 24, width: 24, mr: 1, color: "blue" }} />
-              <Typography sx={{ color: "blue" }}>Acme Hotels</Typography>
-            </Link>
-            <IconButton onClick={toggleSidebar} sx={{ display: { md: "none" } }}>
-              <MenuIcon />
-            </IconButton>
-          </Box>
+  sx={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    mb: 2,
+  }}
+>
+  <Typography
+    variant="h4"
+    color="text.primary"
+    sx={{
+      fontWeight: "bold",  // Make the text bold
+      color: theme.palette.primary.main,  // Use a contrasting color
+      textShadow: "2px 2px 4px rgba(0, 0, 0, 0.2)",  // Add a shadow effect for emphasis
+    }}
+  >
+    Manage {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+  </Typography>
+  <Link href="/" sx={linkStyles}>
+    <MountainIcon sx={{ height: 24, width: 24, mr: 1, color: "blue" }} />
+    <Typography sx={{ color: "blue" }}>Acme Hotels</Typography>
+  </Link>
+  <IconButton onClick={toggleSidebar} sx={{ display: { md: "none" } }}>
+    <MenuIcon />
+  </IconButton>
+</Box>
+
 
           <Tabs
             value={activeTab}

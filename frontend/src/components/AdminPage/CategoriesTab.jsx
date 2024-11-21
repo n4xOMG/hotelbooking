@@ -23,31 +23,48 @@ import {
   Popover,
   InputAdornment,
   Paper,
+  Grid,
   CircularProgress,
   Snackbar,
   Alert,
   Typography,
+  TablePagination, // Added for pagination
 } from "@mui/material";
 import { Delete, Edit, MoreHoriz, Search } from "@mui/icons-material";
-import { fetchCategories, createCategory, updateCategory, deleteCategory } from "../../redux/category/category.action";
+import {
+  fetchCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from "../../redux/category/category.action";
 import LoadingSpinner from "../LoadingSpinner";
 import { FixedSizeList as List } from "react-window";
 import { IconMenuItem } from "../IconMenuItem";
 
 export default function CategoriesTab() {
   const dispatch = useDispatch();
-  const { categories = [], loading, error } = useSelector((state) => state.category);
+  const { categories = [], loading, error } = useSelector(
+    (state) => state.category
+  );
 
   const [menuAnchorEls, setMenuAnchorEls] = useState({});
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [categoryData, setCategoryData] = useState({ name: "", description: "", icon: "" });
+  const [categoryData, setCategoryData] = useState({
+    name: "",
+    description: "",
+    icon: "",
+  });
   const [iconAnchorEl, setIconAnchorEl] = useState(null);
   const [iconSearch, setIconSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [actionLoading, setActionLoading] = useState(false); // To handle loading for save/delete actions
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+
+  // Pagination States
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Snackbar State
   const [snackbar, setSnackbar] = useState({
@@ -65,9 +82,16 @@ export default function CategoriesTab() {
     icon.label.toLowerCase().includes(iconSearch.toLowerCase())
   );
 
-  const filteredCategories = categories.filter((category) =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    category.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCategories = categories.filter(
+    (category) =>
+      category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      category.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Calculate paginated categories
+  const paginatedCategories = filteredCategories.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
   );
 
   useEffect(() => {
@@ -200,87 +224,169 @@ export default function CategoriesTab() {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
+  // Pagination Handlers
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   return (
-    <Box sx={{ p: 2 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <TextField
-            variant="outlined"
-            placeholder="Search categories..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-          />
+    <Box sx={{ p: 3 }}>
+      {/* Header */}
+      <Paper sx={{ p: 3, mb: 4 }} elevation={3}>
+        <Grid
+          container
+          alignItems="center"
+          spacing={2}
+          justifyContent="space-between"
+        >
+          {/* Search bar */}
+          <Grid item xs={12} sm={5}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Search categories..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          {/* Add Category button */}
+          <Grid item xs={12} sm={2}>
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              onClick={() => handleDialogOpen()}
+            >
+              Add Category
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Loading Indicator */}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <CircularProgress />
         </Box>
-        <Button variant="contained" color="primary" onClick={() => handleDialogOpen()}>
-          Add Category
-        </Button>
-      </Box>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <Typography fontWeight="bold">Name</Typography>
-              </TableCell>
-              <TableCell>
-                <Typography fontWeight="bold">Description</Typography>
-              </TableCell>
-              <TableCell>
-                <Typography fontWeight="bold">Icon</Typography>
-              </TableCell>
-              <TableCell>
-                <Typography fontWeight="bold">Actions</Typography>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredCategories.map((category) => (
-              <TableRow key={category._id}>
-                <TableCell>{category.name}</TableCell>
-                <TableCell>{category.description}</TableCell>
-                <TableCell>
-                  {category.icon && Icons[category.icon]
-                    ? React.createElement(Icons[category.icon], { style: { color: "#1976d2" } })
-                    : <Icons.HelpOutline />}
-                </TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleDialogOpen(category)} color="primary" aria-label="edit">
-                    <Edit fontSize="small" />
-                  </IconButton>
-                  <IconButton onClick={(event) => handleMenuOpen(event, category._id)} color="secondary" aria-label="more">
-                    <MoreHoriz fontSize="small" />
-                  </IconButton>
-                  <Menu
-                    anchorEl={menuAnchorEls[category._id]}
-                    open={Boolean(menuAnchorEls[category._id])}
-                    onClose={() => handleMenuClose(category._id)}
-                  >
-                    <MenuItem onClick={() => {
-                      setDeleteId(category._id);
-                      setConfirmDelete(true);
-                    }}>
-                      <Delete fontSize="small" sx={{ mr: 1, color: "error.main" }} />
-                      Delete
-                    </MenuItem>
-                  </Menu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {loading && (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-            <LoadingSpinner />
+      ) : (
+        <>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>
+                    <Typography fontWeight="bold">Name</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Description</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Icon</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight="bold">Actions</Typography>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginatedCategories.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">
+                      <Typography>No categories found.</Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedCategories.map((category) => (
+                    <TableRow key={category._id}>
+                      <TableCell>{category.name}</TableCell>
+                      <TableCell>{category.description}</TableCell>
+                      <TableCell>
+                        {category.icon && Icons[category.icon]
+                          ? React.createElement(Icons[category.icon], {
+                              style: { color: "#1976d2" },
+                            })
+                          : <Icons.HelpOutline />}
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          onClick={() => handleDialogOpen(category)}
+                          color="primary"
+                          aria-label="edit"
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          onClick={(event) =>
+                            handleMenuOpen(event, category._id)
+                          }
+                          color="secondary"
+                          aria-label="more"
+                        >
+                          <MoreHoriz fontSize="small" />
+                        </IconButton>
+                        <Menu
+                          anchorEl={menuAnchorEls[category._id]}
+                          open={Boolean(menuAnchorEls[category._id])}
+                          onClose={() => handleMenuClose(category._id)}
+                        >
+                          <MenuItem
+                            onClick={() => {
+                              setDeleteId(category._id);
+                              setConfirmDelete(true);
+                            }}
+                          >
+                            <Delete
+                              fontSize="small"
+                              sx={{ mr: 1, color: "error.main" }}
+                            />
+                            Delete
+                          </MenuItem>
+                        </Menu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Pagination and Total Count */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              mt: 2,
+            }}
+          >
+            <Typography variant="body2" sx={{ mr: 2 }}>
+              Total: {filteredCategories.length}
+            </Typography>
+            <TablePagination
+              component="div"
+              count={filteredCategories.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25]}
+            />
           </Box>
-        )}
-      </TableContainer>
+        </>
+      )}
 
       {/* Add/Edit Category Dialog */}
       <Dialog
@@ -293,7 +399,14 @@ export default function CategoriesTab() {
           {categoryData._id ? "Edit Category" : "Add Category"}
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              mt: 1,
+            }}
+          >
             <TextField
               autoFocus
               margin="dense"
@@ -369,20 +482,31 @@ export default function CategoriesTab() {
           <Button onClick={handleDialogClose} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleSaveCategory} color="primary" disabled={actionLoading}>
+          <Button
+            onClick={handleSaveCategory}
+            color="primary"
+            disabled={actionLoading}
+          >
             {actionLoading ? <CircularProgress size={24} /> : "Save"}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Confirm Delete Dialog */}
-      <Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)}>
+      <Dialog
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+      >
         <DialogTitle sx={{ fontWeight: "bold" }}>Confirm Deletion</DialogTitle>
         <DialogActions>
           <Button onClick={() => setConfirmDelete(false)} color="primary">
             Cancel
           </Button>
-          <Button onClick={confirmDeleteAction} color="primary" disabled={actionLoading}>
+          <Button
+            onClick={confirmDeleteAction}
+            color="primary"
+            disabled={actionLoading}
+          >
             {actionLoading ? <CircularProgress size={24} /> : "Confirm"}
           </Button>
         </DialogActions>
@@ -395,7 +519,11 @@ export default function CategoriesTab() {
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: "100%" }}>
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
