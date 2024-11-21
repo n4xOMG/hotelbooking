@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, Pagination, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, Pagination, Switch, TextField, Typography } from "@mui/material";
 import { debounce } from "lodash";
 import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -158,6 +158,11 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
           </Button>
         )}
       </Box>
+      <FormControlLabel
+        control={<Switch name="petFriendly" checked={propertyDetails.petFriendly} onChange={handleChange} />}
+        label="Allow Pets"
+        sx={{ mb: 2 }}
+      />
     </Box>
   );
 }

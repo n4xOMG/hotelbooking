@@ -22,23 +22,29 @@ export default function DateRangePickerComponent({ dateRange, setDateRange, hote
 
   const handleStartDateChange = async (event) => {
     const newStartDate = new Date(event.target.value);
+    if (isNaN(newStartDate)) {
+      setError("Invalid start date");
+      return;
+    }
     setDateRange([newStartDate, dateRange[1]]);
     if (dateRange[1]) {
       await handleDateChange(newStartDate, dateRange[1]);
     } else {
-      // Clear error if only start date is selected
-      setError(null);
+      setError(null); // Clear error if only start date is selected
     }
   };
 
   const handleEndDateChange = async (event) => {
     const newEndDate = new Date(event.target.value);
+    if (isNaN(newEndDate)) {
+      setError("Invalid end date");
+      return;
+    }
     setDateRange([dateRange[0], newEndDate]);
     if (dateRange[0]) {
       await handleDateChange(dateRange[0], newEndDate);
     } else {
-      // Clear error if only end date is selected
-      setError(null);
+      setError(null); // Clear error if only end date is selected
     }
   };
 
@@ -55,7 +61,7 @@ export default function DateRangePickerComponent({ dateRange, setDateRange, hote
           label="Check-in"
           type="date"
           InputLabelProps={{ shrink: true }}
-          value={dateRange[0] ? dateRange[0].toISOString().substring(0, 10) : ""}
+          value={dateRange[0] && !isNaN(dateRange[0]) ? dateRange[0].toISOString().substring(0, 10) : ""}
           onChange={handleStartDateChange}
           inputProps={{ min: today }}
           fullWidth
@@ -64,7 +70,7 @@ export default function DateRangePickerComponent({ dateRange, setDateRange, hote
           label="Check-out"
           type="date"
           InputLabelProps={{ shrink: true }}
-          value={dateRange[1] ? dateRange[1].toISOString().substring(0, 10) : ""}
+          value={dateRange[1] && !isNaN(dateRange[1]) ? dateRange[1].toISOString().substring(0, 10) : ""}
           onChange={handleEndDateChange}
           inputProps={{
             min: dateRange[0] ? new Date(dateRange[0].getTime() + 86400000).toISOString().split("T")[0] : today,
