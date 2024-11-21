@@ -10,8 +10,14 @@ export default function AmenitiesList({ amenities }) {
       <Grid container spacing={2}>
         {amenities.map((item, index) => (
           <Grid item xs={6} key={index} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {React.createElement(Icons[item.icon])} {item.description}
-            <Typography>{item.text}</Typography>
+            {item.icon && Icons[item.icon] ? (
+              <>
+                {React.createElement(Icons[item.icon])} {item.description}
+                <Typography>{item.text}</Typography>
+              </>
+            ) : (
+              <Icons.HelpOutline />
+            )}
           </Grid>
         ))}
       </Grid>

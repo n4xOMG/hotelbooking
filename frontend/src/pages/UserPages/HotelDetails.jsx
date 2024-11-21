@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import Header from "../../components/HomePage/Header";
-import AmenitiesList from "../../components/HotelDetails/AmenitiesList";
 import BookingSummary from "../../components/HotelDetails/BookingSummary";
 import DateRangePickerComponent from "../../components/HotelDetails/DateRangePickerComponent";
 import HotelDetailHeader from "../../components/HotelDetails/HotelDetailHeader";
@@ -14,6 +13,7 @@ import LoadingSpinner from "../../components/LoadingSpinner";
 import RatingSection from "../../components/HotelDetails/RatingSection";
 import OwnerCard from "../../components/HotelDetails/OwnerCard";
 import { fetchHotelById } from "../../redux/hotel/hotel.action";
+import AmenitiesList from "../../components/HotelDetails/AmenitiesList";
 
 export default function HotelDetails() {
   const { id } = useParams();

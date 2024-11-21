@@ -1,17 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
-import {
-  Autocomplete,
-  Box,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  MenuItem,
-  Pagination,
-  Switch,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, Pagination, TextField, Typography } from "@mui/material";
 import { debounce } from "lodash";
+import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAmenities } from "../../redux/amenity/amenity.action";
 import { fetchCategories } from "../../redux/category/category.action";
@@ -60,9 +49,7 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
 
   const handleAmenityChange = (amenity) => {
     setPropertyDetails((prev) => {
-      const newAmenities = prev.amenities.includes(amenity)
-        ? prev.amenities.filter((a) => a !== amenity)
-        : [...prev.amenities, amenity];
+      const newAmenities = prev.amenities.includes(amenity) ? prev.amenities.filter((a) => a !== amenity) : [...prev.amenities, amenity];
       return { ...prev, amenities: newAmenities };
     });
   };
@@ -71,9 +58,7 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
     setCurrentPage(value);
   };
 
-  const visibleAmenities = showAll
-    ? amenities
-    : amenities.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const visibleAmenities = showAll ? amenities : amenities.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <Box sx={{ p: 2, boxShadow: 1, bgcolor: "white", borderRadius: 1 }}>
@@ -81,14 +66,7 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
         Property Details
       </Typography>
 
-      <TextField
-        fullWidth
-        label="Property Name"
-        name="name"
-        value={propertyDetails.name}
-        onChange={handleChange}
-        sx={{ mb: 2 }}
-      />
+      <TextField fullWidth label="Property Name" name="name" value={propertyDetails.name} onChange={handleChange} sx={{ mb: 2 }} />
       <Autocomplete
         freeSolo
         options={locationSuggestions || []}
@@ -125,28 +103,14 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
       />
 
       <Box sx={{ display: "flex", gap: 2 }}>
-        <TextField
-          select
-          label="Property Type"
-          name="propertyType"
-          value={propertyDetails.propertyType}
-          onChange={handleChange}
-          fullWidth
-        >
+        <TextField select label="Property Type" name="propertyType" value={propertyDetails.propertyType} onChange={handleChange} fullWidth>
           {propertyTypes.map((type) => (
             <MenuItem key={type._id} value={type._id}>
               {type.type}
             </MenuItem>
           ))}
         </TextField>
-        <TextField
-          select
-          label="Category"
-          name="category"
-          value={propertyDetails.category}
-          onChange={handleChange}
-          fullWidth
-        >
+        <TextField select label="Category" name="category" value={propertyDetails.category} onChange={handleChange} fullWidth>
           {categories.map((category) => (
             <MenuItem key={category._id} value={category._id}>
               {category.name}
@@ -164,10 +128,7 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
             <FormControlLabel
               key={amenity._id}
               control={
-                <Checkbox
-                  checked={propertyDetails.amenities.includes(amenity._id)}
-                  onChange={() => handleAmenityChange(amenity._id)}
-                />
+                <Checkbox checked={propertyDetails.amenities.includes(amenity._id)} onChange={() => handleAmenityChange(amenity._id)} />
               }
               label={amenity.name}
               sx={{
