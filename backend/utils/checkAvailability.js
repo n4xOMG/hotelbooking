@@ -9,17 +9,27 @@ const Booking = require("../models/Booking");
  * @param {Date} checkOutDate - The desired check-out date.
  * @returns {Boolean} - Returns true if the hotel is available, else false.
  */
-const isHotelAvailable = async (hotelId, checkInDate, checkOutDate) => {
+const isHotelAvailableExtended = async (hotelId, checkInDate, checkOutDate) => {
   try {
-    // Check for any overlapping bookings for the hotel
-    const overlappingBooking = await Booking.findOne({
-      hotel: hotelId,
-      $and: [
-        { checkInDate: { $lt: checkOutDate } }, // Booking starts before the desired check-out
-        { checkOutDate: { $gt: checkInDate } }, // Booking ends after the desired check-in
-      ],
-      status: { $in: ["pending", "confirmed"] }, // Consider only active bookings
-    });
+    // Build booking query based on provided dates
+    const bookingQuery = { hotel: hotelId, status: { $in: ["pending", "confirmed"] } };
+
+    if (checkInDate && checkOutDate) {
+      // Both dates provided
+      bookingQuery.$and = [
+        { checkInDate: { $lt: checkOutDate } }, // Booking starts before desired check-out
+        { checkOutDate: { $gt: checkInDate } }, // Booking ends after desired check-in
+      ];
+    } else if (checkInDate && !checkOutDate) {
+      // Only check-in date provided
+      bookingQuery.checkOutDate = { $gt: checkInDate };
+    } else if (!checkInDate && checkOutDate) {
+      // Only check-out date provided
+      bookingQuery.checkInDate = { $lt: checkOutDate };
+    }
+
+    // Check for any overlapping bookings based on the query
+    const overlappingBooking = await Booking.findOne(bookingQuery);
 
     // If no overlapping booking is found, the hotel is available
     return !overlappingBooking;
@@ -28,5 +38,4 @@ const isHotelAvailable = async (hotelId, checkInDate, checkOutDate) => {
     throw error;
   }
 };
-
-module.exports = { isHotelAvailable };
+module.exports = { isHotelAvailableExtended };

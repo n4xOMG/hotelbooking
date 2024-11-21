@@ -2,7 +2,7 @@ const express = require("express");
 const { verifyToken } = require("../config/jwtConfig");
 const Booking = require("../models/Booking");
 const Hotel = require("../models/Hotel");
-const { isHotelAvailable } = require("../utils/checkAvailability"); // Import the utility function
+const { isHotelAvailableExtended } = require("../utils/checkAvailability");
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ router.post("/", verifyToken, async (req, res) => {
     }
 
     // Check availability before booking
-    const available = await isHotelAvailable(hotelId, new Date(checkInDate), new Date(checkOutDate));
+    const available = await isHotelAvailableExtended(hotelId, new Date(checkInDate), new Date(checkOutDate));
     if (!available) {
       return res.status(400).json({ message: "No available rooms for the selected dates." });
     }
@@ -155,7 +155,7 @@ router.get("/check-availability/:hotelId", async (req, res) => {
     }
 
     // Check availability using the utility function
-    const available = await isHotelAvailable(hotelId, parsedStartDate, parsedEndDate);
+    const available = await isHotelAvailableExtended(hotelId, parsedStartDate, parsedEndDate);
 
     res.json({ isAvailable: available });
   } catch (error) {

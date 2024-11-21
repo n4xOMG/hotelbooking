@@ -4,7 +4,7 @@ const { verifyToken } = require("../config/jwtConfig");
 const Hotel = require("../models/Hotel");
 const Room = require("../models/Room");
 const Booking = require("../models/Booking");
-const { isHotelAvailable } = require("../utils/checkAvailability");
+const { isHotelAvailableExtended } = require("../utils/checkAvailability");
 
 const router = express.Router();
 
@@ -30,8 +30,10 @@ router.get("/search", async (req, res) => {
   try {
     const { location, checkIn, checkOut, maxGuests } = req.query;
 
-    // Parse and validate dates if provided
+    // Initialize variables for dates
     let checkInDate, checkOutDate;
+
+    // Parse check-in date if provided
     if (checkIn) {
       checkInDate = new Date(checkIn);
       if (isNaN(checkInDate)) {
@@ -39,18 +41,12 @@ router.get("/search", async (req, res) => {
       }
     }
 
+    // Parse check-out date if provided
     if (checkOut) {
       checkOutDate = new Date(checkOut);
       if (isNaN(checkOutDate)) {
         return res.status(400).json({ error: "Invalid check-out date format." });
       }
-    }
-
-    // If one of the dates is provided, ensure both are present
-    if ((checkIn && !checkOut) || (!checkIn && checkOut)) {
-      return res.status(400).json({
-        error: "Both check-in and check-out dates must be provided together.",
-      });
     }
 
     // If both dates are provided, validate their order
@@ -77,17 +73,17 @@ router.get("/search", async (req, res) => {
 
     let availableHotels = [];
 
-    if (checkInDate && checkOutDate) {
-      // If both check-in and check-out dates are provided, filter hotels based on availability
+    if (checkInDate || checkOutDate) {
+      // If any date is provided, filter hotels based on availability
       const availabilityPromises = hotels.map(async (hotel) => {
-        const available = await isHotelAvailable(hotel._id, checkInDate, checkOutDate);
+        const available = await isHotelAvailableExtended(hotel._id, checkInDate, checkOutDate);
         return available ? hotel : null;
       });
 
       const results = await Promise.all(availabilityPromises);
       availableHotels = results.filter((hotel) => hotel !== null);
     } else {
-      // If dates are not provided, return all hotels matching location, maxGuests, and isAvailable
+      // If no dates are provided, return all hotels matching location, maxGuests, and isAvailable
       availableHotels = hotels;
     }
 
