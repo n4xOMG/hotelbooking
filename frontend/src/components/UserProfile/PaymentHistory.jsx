@@ -45,9 +45,9 @@ export default function PaymentHistory() {
     fetchPayments();
   }, [dispatch]);
 
-  const filteredPayments = paymentHistory.filter(
+  const filteredPayments = paymentHistory?.filter(
     (payment) =>
-      payment.booking.hotel.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      payment.booking?.hotel?.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
       (statusFilter === "All" || payment.paymentStatus === statusFilter)
   );
 
