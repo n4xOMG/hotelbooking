@@ -25,7 +25,7 @@ import { getCurrentUserByJwt } from "../../redux/user/user.action";
 function Copyright(props) {
   return (
     <Typography variant="body2" color="text.secondary" align="center" {...props}>
-      BookSocial {new Date().getFullYear()}
+      HotelBooking {new Date().getFullYear()}
     </Typography>
   );
 }

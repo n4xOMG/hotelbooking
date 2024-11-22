@@ -42,7 +42,7 @@ const BookingHistory = () => {
   };
 
   const hasUserRated = (hotelId) => {
-    return ratingsByUser.some((rating) => rating.hotel.toString() === hotelId.toString());
+    return ratingsByUser.some((rating) => rating.hotel?.toString() === hotelId?.toString());
   };
 
   return (
@@ -68,9 +68,9 @@ const BookingHistory = () => {
                   }}
                 >
                   <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Avatar sx={{ mr: 2 }}>{booking.hotel.name[0]}</Avatar>
+                    <Avatar sx={{ mr: 2 }}>{booking?.hotel?.name[0]}</Avatar>
                     <Box>
-                      <Typography fontWeight="medium">{booking.hotel.name}</Typography>
+                      <Typography fontWeight="medium">{booking?.hotel?.name}</Typography>
                       <Typography variant="body2" color="text.secondary">
                         Check-in: {formatDate(booking.checkInDate)}
                       </Typography>
@@ -89,8 +89,8 @@ const BookingHistory = () => {
                         variant="outlined"
                         size="small"
                         sx={{ mt: 1 }}
-                        onClick={() => handleOpenDialog(booking.hotel._id)}
-                        disabled={hasUserRated(booking.hotel._id)}
+                        onClick={() => handleOpenDialog(booking?.hotel?._id)}
+                        disabled={hasUserRated(booking?.hotel?._id)}
                       >
                         {hasUserRated(booking.hotel._id) ? "Rated" : "Rate"}
                       </Button>

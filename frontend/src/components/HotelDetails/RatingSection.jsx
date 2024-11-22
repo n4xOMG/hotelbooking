@@ -18,8 +18,7 @@ import {
   DialogActions,
   TextField,
   Snackbar,
-  Alert
-
+  Alert,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchRatingsByHotel } from "../../redux/rating/rating.action";
@@ -36,9 +35,7 @@ const RatingSection = ({ hotelId }) => {
   const [openModal, setOpenModal] = useState(false);
   const [currentImages, setCurrentImages] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const { user, loading: userLoading, error: userError } = useSelector(
-    (state) => state.user
-  );
+  const { user, loading: userLoading, error: userError } = useSelector((state) => state.user);
 
   const [openDialog, setOpenDialog] = useState(false);
   const [reason, setReason] = useState("");
@@ -58,8 +55,8 @@ const RatingSection = ({ hotelId }) => {
     dispatch(getCurrentUserByJwt());
   }, [dispatch, hotelId]);
 
-   // Snackbar State
-   const [snackbar, setSnackbar] = useState({
+  // Snackbar State
+  const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
@@ -82,10 +79,7 @@ const RatingSection = ({ hotelId }) => {
   };
 
   const handlePrevImage = () => {
-    setCurrentImageIndex(
-      (prevIndex) =>
-        (prevIndex - 1 + currentImages.length) % currentImages.length
-    );
+    setCurrentImageIndex((prevIndex) => (prevIndex - 1 + currentImages.length) % currentImages.length);
   };
 
   const handleOpenDialog = (ratingId) => {
@@ -108,20 +102,20 @@ const RatingSection = ({ hotelId }) => {
         reason,
       };
       dispatch(createReport(reportData))
-      .then(() => {
-        setSnackbar({
-          open: true,
-          message: "Report created successfully.",
-          severity: "success",
+        .then(() => {
+          setSnackbar({
+            open: true,
+            message: "Report created successfully.",
+            severity: "success",
+          });
+        })
+        .catch(() => {
+          setSnackbar({
+            open: true,
+            message: "Failed to create report.",
+            severity: "error",
+          });
         });
-      })
-      .catch(() => {
-        setSnackbar({
-          open: true,
-          message: "Failed to create report.",
-          severity: "error",
-        });
-      });
       handleCloseDialog();
     }
   };
@@ -129,7 +123,6 @@ const RatingSection = ({ hotelId }) => {
   const handleSnackbarClose = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
-
 
   const handleReply = (ratingId) => {
     console.log(`Reply to rating with ID: ${ratingId}`);
@@ -149,11 +142,7 @@ const RatingSection = ({ hotelId }) => {
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: "100%" }}>
           {snackbar.message}
         </Alert>
       </Snackbar>
@@ -168,20 +157,15 @@ const RatingSection = ({ hotelId }) => {
               <Card elevation={3}>
                 <CardHeader
                   avatar={
-                    <Avatar src={rating.user.avatarUrl}>
-                      {rating.user.firstname.charAt(0)}
-                    </Avatar>
+                    rating.user && rating.user.avatarUrl ? (
+                      <Avatar src={rating.user.avatarUrl}>{rating.user.firstname.charAt(0)}</Avatar>
+                    ) : (
+                      <Avatar>Ano</Avatar>
+                    )
                   }
                   title={`${rating.user.firstname} ${rating.user.lastname}`}
                   subheader={formatDate(rating.createdAt)}
-                  action={
-                    <Rating
-                      name="read-only"
-                      value={rating.value}
-                      readOnly
-                      precision={0.5}
-                    />
-                  }
+                  action={<Rating name="read-only" value={rating.value} readOnly precision={0.5} />}
                 />
                 <Divider />
                 <CardContent>
@@ -198,9 +182,7 @@ const RatingSection = ({ hotelId }) => {
                             image={img}
                             alt={`Rating Image ${index + 1}`}
                             sx={{ borderRadius: 1, cursor: "pointer" }}
-                            onClick={() =>
-                              handleOpenModal(rating.images, index)
-                            }
+                            onClick={() => handleOpenModal(rating.images, index)}
                           />
                         </Grid>
                       ))}
@@ -217,12 +199,7 @@ const RatingSection = ({ hotelId }) => {
                         Reply
                       </Button> */}
                       {isAdmin && (
-                        <Button
-                          variant="contained"
-                          color="error"
-                          onClick={() => handleOpenDialog(rating._id)}
-                          startIcon={<Report />}
-                        >
+                        <Button variant="contained" color="error" onClick={() => handleOpenDialog(rating._id)} startIcon={<Report />}>
                           Report
                         </Button>
                       )}
@@ -266,11 +243,7 @@ const RatingSection = ({ hotelId }) => {
           <Button onClick={handleCloseDialog} color="primary">
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmitReport}
-            color="error"
-            disabled={reason.trim() === ""}
-          >
+          <Button onClick={handleSubmitReport} color="error" disabled={reason.trim() === ""}>
             Submit
           </Button>
         </DialogActions>
