@@ -1,7 +1,17 @@
 import { Grid, Paper, Typography } from "@mui/material";
 
 export function DashboardOverview({ hotels }) {
-  const stats = [{ label: "Total Hotels", value: `${hotels.length}` }];
+  const totalRatings = hotels.reduce((acc, hotel) => acc + hotel.avgRating, 0);
+  const avgRating = ((totalRatings / hotels.length).toFixed(2), 0);
+
+  // Tính số lượng Booking
+  const totalBookings = hotels.reduce((acc, hotel) => acc + hotel.ratings.length, 0);
+
+  const stats = [
+    { label: "Total Hotels", value: `${hotels.length}` },
+    { label: "Active Bookings", value: `${totalBookings}` },
+    { label: "Average Rating", value: `${avgRating ? avgRating : 0}` },
+  ];
 
   return (
     <Grid container spacing={2} mb={4}>
