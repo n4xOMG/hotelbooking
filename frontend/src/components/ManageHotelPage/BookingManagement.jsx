@@ -33,10 +33,10 @@ export default function BookingManagement({ bookings }) {
 
   // Filter bookings
   const filteredBookings = bookings?.filter((booking) => {
-    const matchesStatus = statusFilter === "all" || booking.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || booking?.status === statusFilter;
     const matchesSearch =
-      booking.user.firstname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.user.lastname.toLowerCase().includes(searchQuery.toLowerCase());
+      booking?.user?.firstname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking?.user?.lastname?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 

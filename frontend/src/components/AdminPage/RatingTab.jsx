@@ -32,13 +32,9 @@ import {
 } from "@mui/material";
 import { Edit, Delete, Visibility, Report, Search } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import {
-  getAllRatings,
-  updateRating,
-  deleteRating,
-  createRating,
-} from "../../redux/rating/rating.action";
+import { getAllRatings, updateRating, deleteRating, createRating } from "../../redux/rating/rating.action";
 import LoadingSpinner from "../LoadingSpinner";
+import { createReport } from "../../redux/report/report.action";
 
 export default function RatingTab() {
   const dispatch = useDispatch();
@@ -69,15 +65,14 @@ export default function RatingTab() {
   const filteredRatings = useMemo(() => {
     return (ratings || []).filter((rating) => {
       const matchesSearch =
-        (rating.user?.username?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-        (rating.comment?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
+        rating.user?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        false ||
+        rating.comment?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        false;
 
       const matchesStar = starFilter ? rating.value === parseInt(starFilter) : true;
 
-      const matchesDate = dateFilter
-        ? new Date(rating.createdAt).toLocaleDateString() ===
-          new Date(dateFilter).toLocaleDateString()
-        : true;
+      const matchesDate = dateFilter ? new Date(rating.createdAt).toLocaleDateString() === new Date(dateFilter).toLocaleDateString() : true;
 
       return matchesSearch && matchesStar && matchesDate && !rating.hidden;
     });
@@ -140,15 +135,16 @@ export default function RatingTab() {
   const handleReportSubmit = () => {
     if (reportContent.trim()) {
       const reportData = {
-        ratingId: selectedRating._id,
-        comment: reportContent,
-        value: 0,
+        reportedBy: selectedRating._id,
+        type: "Comment",
+        itemId: selectedRating.hotel,
+        reason: reportContent,
         user: {
           username: "Admin",
         },
       };
 
-      dispatch(createRating(reportData))
+      dispatch(createReport(reportData))
         .then(() => {
           setSnackbar({
             open: true,
@@ -225,11 +221,7 @@ export default function RatingTab() {
           <Grid item xs={12} sm={3}>
             <FormControl fullWidth variant="outlined">
               <InputLabel>Star Rating</InputLabel>
-              <Select
-                value={starFilter}
-                onChange={(e) => setStarFilter(e.target.value)}
-                label="Star Rating"
-              >
+              <Select value={starFilter} onChange={(e) => setStarFilter(e.target.value)} label="Star Rating">
                 <MenuItem value="">
                   <em>All</em>
                 </MenuItem>
@@ -255,12 +247,7 @@ export default function RatingTab() {
             />
           </Grid>
           <Grid item xs={12} sm={2}>
-            <Button
-              fullWidth
-              variant="contained"
-              color="secondary"
-              onClick={handleClearFilters}
-            >
+            <Button fullWidth variant="contained" color="secondary" onClick={handleClearFilters}>
               Reset Filters
             </Button>
           </Grid>
@@ -313,9 +300,7 @@ export default function RatingTab() {
                       <TableCell>{rating.user?.username || "Unknown User"}</TableCell>
                       <TableCell>{rating.value}</TableCell>
                       <TableCell>{rating.comment}</TableCell>
-                      <TableCell>
-                        {new Date(rating.createdAt).toLocaleDateString()}
-                      </TableCell>
+                      <TableCell>{new Date(rating.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell align="center">
                         <Tooltip title="View Rating">
                           <IconButton onClick={() => handleView(rating.hotel)}>
@@ -366,12 +351,7 @@ export default function RatingTab() {
       )}
 
       {/* Report Dialog */}
-      <Dialog
-        open={openReportDialog}
-        onClose={() => setOpenReportDialog(false)}
-        fullWidth
-        maxWidth="sm"
-      >
+      <Dialog open={openReportDialog} onClose={() => setOpenReportDialog(false)} fullWidth maxWidth="sm">
         <DialogTitle>Report Rating</DialogTitle>
         <DialogContent>
           <Typography variant="subtitle1" gutterBottom>
@@ -391,11 +371,7 @@ export default function RatingTab() {
           <Button onClick={() => setOpenReportDialog(false)} color="secondary">
             Cancel
           </Button>
-          <Button
-            onClick={handleReportSubmit}
-            color="primary"
-            variant="contained"
-          >
+          <Button onClick={handleReportSubmit} color="primary" variant="contained">
             Submit Report
           </Button>
         </DialogActions>

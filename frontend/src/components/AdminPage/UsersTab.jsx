@@ -31,10 +31,7 @@ import {
   TablePagination, // Added for pagination
 } from "@mui/material";
 import { Edit, Search } from "@mui/icons-material";
-import {
-  fetchUsers,
-  updateUser,
-} from "../../redux/user/user.action";
+import { fetchUsers, updateUser } from "../../redux/user/user.action";
 import LoadingSpinner from "../LoadingSpinner";
 
 export default function UsersTab() {
@@ -54,9 +51,9 @@ export default function UsersTab() {
   });
 
   const roleColors = {
-    user: '#4caf50', // Green
-    admin: '#f44336', // Red
-    hotelOwner: '#2196f3', // Blue
+    user: "#4caf50", // Green
+    admin: "#f44336", // Red
+    hotelOwner: "#2196f3", // Blue
   };
 
   // Pagination States
@@ -77,9 +74,12 @@ export default function UsersTab() {
   const filteredUsers = useMemo(() => {
     return (users || []).filter((user) => {
       const matchesSearch =
-        (user.username?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-        (user.phoneNumber?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-        (user.email?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
+        user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        false ||
+        user.phoneNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        false ||
+        user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        false;
 
       const matchesRole = roleFilter ? user.role === roleFilter : true;
       const matchesGender = genderFilter ? user.gender === genderFilter : true;
@@ -124,7 +124,6 @@ export default function UsersTab() {
         phoneNumber: userData.phoneNumber,
         email: userData.email,
         role: userData.role,
-        gender: userData.gender,
       };
 
       dispatch(updateUser(selectedUser._id, updatedUser))
@@ -178,11 +177,7 @@ export default function UsersTab() {
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: "100%" }}>
           {snackbar.message}
         </Alert>
       </Snackbar>
@@ -208,11 +203,7 @@ export default function UsersTab() {
           <Grid item xs={12} sm={3}>
             <FormControl fullWidth variant="outlined">
               <InputLabel>Role</InputLabel>
-              <Select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                label="Role"
-              >
+              <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} label="Role">
                 <MenuItem value="">
                   <em>All</em>
                 </MenuItem>
@@ -225,11 +216,7 @@ export default function UsersTab() {
           <Grid item xs={12} sm={3}>
             <FormControl fullWidth variant="outlined">
               <InputLabel>Gender</InputLabel>
-              <Select
-                value={genderFilter}
-                onChange={(e) => setGenderFilter(e.target.value)}
-                label="Gender"
-              >
+              <Select value={genderFilter} onChange={(e) => setGenderFilter(e.target.value)} label="Gender">
                 <MenuItem value="">
                   <em>All</em>
                 </MenuItem>
@@ -240,12 +227,7 @@ export default function UsersTab() {
             </FormControl>
           </Grid>
           <Grid item xs={12} sm={2}>
-            <Button
-              fullWidth
-              variant="contained"
-              color="secondary"
-              onClick={handleClearFilters}
-            >
+            <Button fullWidth variant="contained" color="secondary" onClick={handleClearFilters}>
               Reset Filters
             </Button>
           </Grid>
@@ -301,10 +283,14 @@ export default function UsersTab() {
                       <TableCell>{user.username || "N/A"}</TableCell>
                       <TableCell>{user.phoneNumber || "N/A"}</TableCell>
                       <TableCell>{user.email || "N/A"}</TableCell>
-                      <TableCell style={{
-                        color: roleColors[user.role] || '#000', // Use color based on role
-                        fontWeight: 'bold',
-                      }}>{user.role || "N/A"}</TableCell>
+                      <TableCell
+                        style={{
+                          color: roleColors[user.role] || "#000", // Use color based on role
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {user.role || "N/A"}
+                      </TableCell>
                       <TableCell>{user.gender || "N/A"}</TableCell>
                       <TableCell align="center">
                         <Tooltip title="Edit User">
@@ -346,12 +332,7 @@ export default function UsersTab() {
       )}
 
       {/* Edit User Dialog */}
-      <Dialog
-        open={openEditDialog}
-        onClose={() => setOpenEditDialog(false)}
-        fullWidth
-        maxWidth="sm"
-      >
+      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} fullWidth maxWidth="sm">
         <DialogTitle>Edit User</DialogTitle>
         <DialogContent>
           <Box
@@ -369,6 +350,7 @@ export default function UsersTab() {
               margin="dense"
               name="username"
               label="Username"
+              disabled
               type="text"
               fullWidth
               required
@@ -380,6 +362,7 @@ export default function UsersTab() {
               name="phoneNumber"
               label="Phone Number"
               type="text"
+              disabled
               fullWidth
               required
               value={userData.phoneNumber}
@@ -390,6 +373,7 @@ export default function UsersTab() {
               name="email"
               label="Email"
               type="email"
+              disabled
               fullWidth
               required
               value={userData.email}
@@ -397,25 +381,15 @@ export default function UsersTab() {
             />
             <FormControl fullWidth margin="dense" required>
               <InputLabel>Role</InputLabel>
-              <Select
-                name="role"
-                value={userData.role}
-                onChange={handleInputChange}
-                label="Role"
-              >
+              <Select name="role" value={userData.role} onChange={handleInputChange} label="Role">
                 <MenuItem value="admin">Admin</MenuItem>
                 <MenuItem value="user">User</MenuItem>
                 <MenuItem value="hotelOwner">Hotel Owner</MenuItem>
               </Select>
             </FormControl>
-            <FormControl fullWidth margin="dense" required>
+            <FormControl fullWidth margin="dense" disabled>
               <InputLabel>Gender</InputLabel>
-              <Select
-                name="gender"
-                value={userData.gender}
-                onChange={handleInputChange}
-                label="Gender"
-              >
+              <Select name="gender" value={userData.gender} onChange={handleInputChange} label="Gender">
                 <MenuItem value="Male">Male</MenuItem>
                 <MenuItem value="Female">Female</MenuItem>
                 <MenuItem value="Other">Other</MenuItem>
@@ -427,11 +401,7 @@ export default function UsersTab() {
           <Button onClick={() => setOpenEditDialog(false)} color="secondary">
             Cancel
           </Button>
-          <Button
-            onClick={handleEditSubmit}
-            color="primary"
-            variant="contained"
-          >
+          <Button onClick={handleEditSubmit} color="primary" variant="contained">
             Save Changes
           </Button>
         </DialogActions>

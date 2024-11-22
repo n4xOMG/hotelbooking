@@ -1,11 +1,7 @@
 import { Grid, Paper, Typography } from "@mui/material";
 
 export function DashboardOverview({ hotels }) {
-  const stats = [
-    { label: "Total Hotels", value: `${hotels.length}` },
-    { label: "Active Bookings", value: 48 },
-    { label: "Average Rating", value: 4.6 },
-  ];
+  const stats = [{ label: "Total Hotels", value: `${hotels.length}` }];
 
   return (
     <Grid container spacing={2} mb={4}>

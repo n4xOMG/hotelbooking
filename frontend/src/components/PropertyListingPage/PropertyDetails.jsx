@@ -7,7 +7,7 @@ import { fetchCategories } from "../../redux/category/category.action";
 import { fetchPropertyTypes } from "../../redux/propertyType/propertyType.action";
 import { fetchLocationSuggestions } from "../../utils/fetchLocationSuggestions";
 
-const ITEMS_PER_PAGE = 6; // Số lượng amenities mỗi trang
+const ITEMS_PER_PAGE = 6; // Number of amenities per page
 
 export default function PropertyDetails({ propertyDetails, setPropertyDetails }) {
   const dispatch = useDispatch();
@@ -18,6 +18,15 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [showAll, setShowAll] = useState(false);
+
+  const [errors, setErrors] = useState({
+    name: "",
+    location: "",
+    description: "",
+    maxGuests: "",
+    propertyType: "",
+    category: "",
+  });
 
   useEffect(() => {
     dispatch(fetchCategories());
@@ -33,6 +42,74 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
     []
   );
 
+  const validateField = (fieldName, value) => {
+    let errorMessage = "";
+
+    switch (fieldName) {
+      case "name":
+        if (!value.trim()) {
+          errorMessage = "Property name is required.";
+        }
+        break;
+      case "location":
+        if (!value.trim()) {
+          errorMessage = "Location is required.";
+        }
+        break;
+      case "description":
+        if (!value.trim()) {
+          errorMessage = "Description is required.";
+        } else if (value.length < 20) {
+          errorMessage = "Description must be at least 20 characters long.";
+        }
+        break;
+      case "maxGuests":
+        if (value === "" || value === null) {
+          errorMessage = "Maximum number of guests is required.";
+        } else if (isNaN(value)) {
+          errorMessage = "Maximum guests must be a number.";
+        } else if (Number(value) <= 0) {
+          errorMessage = "Maximum guests must be a positive number.";
+        }
+        break;
+      case "propertyType":
+        if (!value) {
+          errorMessage = "Property type is required.";
+        }
+        break;
+      case "category":
+        if (!value) {
+          errorMessage = "Category is required.";
+        }
+        break;
+      default:
+        break;
+    }
+
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [fieldName]: errorMessage,
+    }));
+  };
+
+  const validateAllFields = () => {
+    const fields = ["name", "location", "description", "maxGuests", "propertyType", "category"];
+    let isValid = true;
+
+    fields.forEach((field) => {
+      validateField(field, propertyDetails[field]);
+      if (
+        propertyDetails[field] === "" ||
+        propertyDetails[field] === null ||
+        (field === "description" && propertyDetails[field].length < 20)
+      ) {
+        isValid = false;
+      }
+    });
+
+    return isValid;
+  };
+
   const handleLocationChange = (event, value) => {
     setPropertyDetails((prev) => ({ ...prev, location: value }));
     if (value.length > 2) {
@@ -40,11 +117,17 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
     } else {
       setLocationSuggestions([]);
     }
+    validateField("location", value);
   };
 
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
-    setPropertyDetails((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    const newValue = type === "checkbox" ? checked : value;
+
+    setPropertyDetails((prev) => ({ ...prev, [name]: newValue }));
+
+    // Validate the specific field on change
+    validateField(name, newValue);
   };
 
   const handleAmenityChange = (amenity) => {
@@ -66,7 +149,17 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
         Property Details
       </Typography>
 
-      <TextField fullWidth label="Property Name" name="name" value={propertyDetails.name} onChange={handleChange} sx={{ mb: 2 }} />
+      <TextField
+        fullWidth
+        label="Property Name"
+        name="name"
+        value={propertyDetails.name}
+        onChange={handleChange}
+        sx={{ mb: 2 }}
+        error={Boolean(errors.name)}
+        helperText={errors.name}
+        required
+      />
       <Autocomplete
         freeSolo
         options={locationSuggestions || []}
@@ -78,7 +171,17 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
             {option.description}
           </li>
         )}
-        renderInput={(params) => <TextField {...params} label="Location" name="location" sx={{ mb: 2 }} />}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Location"
+            name="location"
+            sx={{ mb: 2 }}
+            error={Boolean(errors.location)}
+            helperText={errors.location}
+            required
+          />
+        )}
       />
       <TextField
         fullWidth
@@ -89,28 +192,58 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
         multiline
         rows={4}
         sx={{ mb: 2 }}
+        error={Boolean(errors.description)}
+        helperText={errors.description}
+        required
       />
       <TextField
         fullWidth
         type="number"
-        min="1"
-        max="1000"
-        label="Max guests number"
+        label="Max Guests Number"
         name="maxGuests"
         value={propertyDetails.maxGuests}
         onChange={handleChange}
         sx={{ mb: 2 }}
+        error={Boolean(errors.maxGuests)}
+        helperText={errors.maxGuests}
+        InputProps={{
+          inputProps: {
+            min: 1,
+            max: 1000,
+          },
+        }}
+        required
       />
 
-      <Box sx={{ display: "flex", gap: 2 }}>
-        <TextField select label="Property Type" name="propertyType" value={propertyDetails.propertyType} onChange={handleChange} fullWidth>
+      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+        <TextField
+          select
+          label="Property Type"
+          name="propertyType"
+          value={propertyDetails.propertyType}
+          onChange={handleChange}
+          fullWidth
+          error={Boolean(errors.propertyType)}
+          helperText={errors.propertyType}
+          required
+        >
           {propertyTypes.map((type) => (
             <MenuItem key={type._id} value={type._id}>
               {type.type}
             </MenuItem>
           ))}
         </TextField>
-        <TextField select label="Category" name="category" value={propertyDetails.category} onChange={handleChange} fullWidth>
+        <TextField
+          select
+          label="Category"
+          name="category"
+          value={propertyDetails.category}
+          onChange={handleChange}
+          fullWidth
+          error={Boolean(errors.category)}
+          helperText={errors.category}
+          required
+        >
           {categories.map((category) => (
             <MenuItem key={category._id} value={category._id}>
               {category.name}
@@ -139,7 +272,7 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
           ))}
         </Box>
 
-        {!showAll && (
+        {!showAll && amenities.length > ITEMS_PER_PAGE && (
           <Pagination
             count={Math.ceil(amenities.length / ITEMS_PER_PAGE)}
             page={currentPage}
@@ -150,11 +283,11 @@ export default function PropertyDetails({ propertyDetails, setPropertyDetails })
 
         {showAll ? (
           <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={() => setShowAll(false)}>
-            Hiển thị theo trang
+            Show by Page
           </Button>
         ) : (
           <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={() => setShowAll(true)}>
-            Xem tất cả
+            View All
           </Button>
         )}
       </Box>
